@@ -1,46 +1,26 @@
 /**
- * Animated VelonLabs Banner — OpenCode-derived 2-layer wordmark
- * ===============================================================
- * Structural reference: opencode.ai/brand
+ * VelonLabs Banner — borderless ALL-CAPS wordmark
+ * ===================================================
+ * Layout (no frame, just typography):
  *
- *   Each OpenCode glyph is composed of TWO independent SVG paths:
- *     1. an outer outline (the letter shape)
- *     2. a smaller solid inner block, placed inside any enclosed area
- *        and rendered in a contrasting fill color
+ *      ██  ██  █████  ██      █████  ██  ██  ██      █████  █████  █████
+ *      ██  ██  ██     ██      ██  ██ ██▓ ██  ██      ██  ██ ██  ██ ██
+ *      ██  ██  ██     ██      ██  ██ ██████  ██      ██████ █████  █████
+ *      ██  ██  ████   ██      ██▓▓██ ██████  ██      ██▓▓██ ██  ██     ██
+ *       ████   ██     ██      ██▓▓██ ██ ███  ██      ██  ██ ██  ██     ██
+ *        ██    █████  █████   █████  ██  ██  █████   ██  ██ █████  █████
  *
- *   That two-path layering is what gives OpenCode its "stenciled metal"
- *   feel. We borrow the structure (not the colors) and apply it to the
- *   "VelonLabs" wordmark in our brand violet.
+ *      M A S T E R    ·    T R A D I N G    ·    S K I L L S
+ *      v3.1.0  ·  139 tests  ·  MIT  ·  calibration v2026.05
  *
- * Implementation:
- *   - 6-row × 6-col block font, mixed case (V e l o n L a b s).
- *   - Letters with naturally enclosed bowls (o, a, b, e) carry an
- *     inner fill block in the lower portion of their hole. The block
- *     is encoded as the marker char "▓" inside the FONT entry; the
- *     colorizer detects "▓" and renders it as "█" in the deepest
- *     ramp stop, so the outline and inner fill read as two visually
- *     distinct layers.
- *   - Letters without enclosure (V, L, l, n, s) stay outline-only.
+ * Two-layer letterform (OpenCode-derived structure, our colours):
+ *   - Outline cells `█` carry the row-gradient + horizontal sheen.
+ *   - Inner-fill cells `▓` (encoded in FONT, rendered as full blocks)
+ *     anchor to the deepest violet stop — high contrast against the
+ *     outline so the layering reads even at small sizes.
  *
- * Depth (虚实感) carried over from prior pass:
- *   - 6-stop violet ramp: highlight #E8DCFF → shadow #3A2A8F
- *   - Horizontal sheen: sin(col + frame · 0.16) shifts ±1 ramp stop
- *
- *     ╭──────────────────────────────────────────────────────────────────────────────╮
- *     │                                                                              │
- *     │     ██  ██               ██                  ██              ██              │
- *     │     ██  ██   ████   ██   ████  █████  ██     ████      █████                │
- *     │     ██  ██  ██  ██  ██  ██  ██ ██  ██ ██        ██     ██                   │
- *     │     ██  ██  ██████  ██  ██▓▓██ ██  ██ ██     █████ ██ ██████                │
- *     │      ████   ██      ██  ██▓▓██ ██  ██ ██     ██▓▓██ ██     ██               │
- *     │       ██     █████  ██   ████  ██  ██ ██████  █████ ██ █████                │
- *     │                                ↑           ↑                                │
- *     │                          inner fill blocks (darker stop)                    │
- *     │                                                                              │
- *     │             M A S T E R    ·    T R A D I N G    ·    S K I L L S           │
- *     │           v3.1.0  ·  139 tests  ·  MIT  ·  calibration v2026.05             │
- *     │                                                                              │
- *     ╰──────────────────────────────────────────────────────────────────────────────╯
+ * Animation: 1.6 s sheen sweep on truecolor TTYs, then settle. CI /
+ * pipes / no-color terminals get a single static render.
  */
 
 import {
@@ -58,12 +38,10 @@ import {
   supportsTrueColorOutput,
 } from "./colors.mjs";
 
-// ─────────────────────────── 6-row mixed-case font ───────────────────────────
+// ─────────────────────────── 6-row uppercase font ───────────────────────────
 //
-// "▓" is the inner-fill marker. Wherever a letter has an enclosed bowl,
-// the lower portion of that bowl is filled with "▓" so the colorizer can
-// render it as the contrasting inner block (deepest violet stop). The
-// rest of the strokes stay "█" and pick up the row-gradient + sheen.
+// Every glyph is 6 rows × 6 cols, 2-col strokes. "▓" marks inner-fill cells
+// (the decorative dark block from OpenCode-style two-path layering).
 
 const FONT = {
   V: [
@@ -74,73 +52,62 @@ const FONT = {
     " ████ ",
     "  ██  ",
   ],
+  E: [
+    "██████",
+    "██    ",
+    "██    ",
+    "████  ",
+    "██▓▓  ",
+    "██████",
+  ],
   L: [
     "██    ",
     "██    ",
     "██    ",
     "██    ",
-    "██    ",
-    "██████",
-  ],
-
-  l: [
-    "  ██  ",
-    "  ██  ",
-    "  ██  ",
-    "  ██  ",
-    "  ██  ",
-    "  ██  ",
-  ],
-  b: [
-    "██    ",
-    "██    ",
-    "█████ ",
-    "██▓▓██",
-    "██▓▓██",
-    "█████ ",
-  ],
-
-  e: [
-    "      ",
-    " ████ ",
-    "██  ██",
-    "██████",
     "██▓▓  ",
-    " █████",
+    "██████",
   ],
-  o: [
-    "      ",
-    " ████ ",
+  O: [
+    "██████",
+    "██  ██",
     "██  ██",
     "██▓▓██",
     "██▓▓██",
-    " ████ ",
+    "██████",
   ],
-  n: [
-    "      ",
+  N: [
+    "██  ██",
+    "███ ██",
+    "██████",
+    "██████",
+    "██ ███",
+    "██  ██",
+  ],
+  A: [
+    " ████ ",
+    "██  ██",
+    "██████",
+    "██▓▓██",
+    "██  ██",
+    "██  ██",
+  ],
+  B: [
     "█████ ",
     "██  ██",
-    "██  ██",
-    "██  ██",
-    "██  ██",
-  ],
-  a: [
-    "      ",
-    " ████ ",
-    "    ██",
-    " █████",
+    "█████ ",
     "██▓▓██",
-    " █████",
+    "██▓▓██",
+    "█████ ",
   ],
-  s: [
-    "      ",
-    " █████",
+  S: [
+    "██████",
     "██    ",
-    " ████ ",
-    "    ██",
     "█████ ",
+    "    ██",
+    "    ██",
+    "██████",
   ],
-
   " ": [
     "      ",
     "      ",
@@ -151,7 +118,7 @@ const FONT = {
   ],
 };
 
-const WORDMARK_TEXT = "VelonLabs";  // exact brand spelling — case-sensitive
+const WORDMARK_TEXT = "VELONLABS";
 const WORDMARK_GAP = 2;
 
 function buildWordmark(text) {
@@ -169,22 +136,22 @@ function buildWordmark(text) {
 }
 
 const WORDMARK_ROWS = buildWordmark(WORDMARK_TEXT);
+const WORDMARK_WIDTH = WORDMARK_ROWS[0].length;
 
-// ─────────────────────────── box dimensions ───────────────────────────
-
-const BOX_WIDTH = 86;
-const INNER_WIDTH = BOX_WIDTH - 4;
-
-// ─────────────────────────── 6-stop violet ramp ───────────────────────────
+// ─────────────────────────── colour ramp ───────────────────────────
 
 const RAMP = [
   [232, 220, 255], // 0 — highlight
   [200, 180, 255], // 1
   [160, 128, 255], // 2
   [124,  92, 255], // 3 — brand
-  [ 88,  64, 212], // 4 — violetDeep
-  [ 58,  42, 143], // 5 — shadow (used for inner fill)
+  [ 88,  64, 212], // 4
+  [ 58,  42, 143], // 5 — shadow
 ];
+
+// Inner-fill anchor: even darker than RAMP[5] so the layering pops.
+const INNER_FILL_BASE = [28, 14, 70];   // very deep violet, near-black
+const INNER_FILL_LIFT = [60, 36, 120];  // slight breathing toward this
 
 const lerp = (a, b, t) => a + (b - a) * t;
 const mix = (a, b, t) => [
@@ -202,66 +169,36 @@ function outlineColor(rowIdx, col, rowLen, frame) {
   return mix(RAMP[lo], RAMP[hi], fStop - lo);
 }
 
-// Inner fill is constant — it's the "main fill" rectangle from
-// OpenCode's design. Slightly modulated by the same sheen so the
-// surface still feels alive, but anchored to the deepest stop.
-function innerColor(col, rowLen, frame) {
+function innerFillColor(col, rowLen, frame) {
   const sheen = Math.sin((col / rowLen) * Math.PI * 2 + frame * 0.16);
-  return mix(RAMP[5], RAMP[4], (1 + sheen) * 0.25); // mostly RAMP[5]
+  // Mostly INNER_FILL_BASE; subtle 30 % lift on bright sheen pass.
+  const t = Math.max(0, Math.min(1, (1 + sheen) * 0.15));
+  return mix(INNER_FILL_BASE, INNER_FILL_LIFT, t);
 }
 
 function colorizeWordmark(rows, frame) {
-  if (!colorEnabled) {
-    // Still substitute the marker so non-color terminals see "█"
-    return rows.map((r) => r.replace(/▓/g, "█"));
-  }
+  if (!colorEnabled) return rows.map((r) => r.replace(/▓/g, "█"));
   return rows.map((row, rowIdx) => {
     let out = "";
     for (let col = 0; col < row.length; col++) {
       const ch = row[col];
-      if (ch === " ") {
-        out += ch;
-        continue;
-      }
+      if (ch === " ") { out += ch; continue; }
       if (ch === "▓") {
-        // Inner fill — deepest stop, render as full block
-        out += rgb(innerColor(col, row.length, frame)) + "█" + RESET;
+        out += rgb(innerFillColor(col, row.length, frame)) + "█" + RESET;
         continue;
       }
-      // Outline — row gradient + sheen
       out += rgb(outlineColor(rowIdx, col, row.length, frame)) + ch + RESET;
     }
     return out + RESET;
   });
 }
 
-// ─────────────────────────── escape-aware width helpers ───────────────────────────
+// ─────────────────────────── escape-aware width ───────────────────────────
 
 function visibleLength(str) {
   // eslint-disable-next-line no-control-regex
   return str.replace(/\x1b\[[0-9;]*m/g, "").length;
 }
-
-function padRight(str, targetVisible) {
-  const v = visibleLength(str);
-  return v >= targetVisible ? str : str + " ".repeat(targetVisible - v);
-}
-
-function padCenter(str, targetVisible) {
-  const v = visibleLength(str);
-  if (v >= targetVisible) return str;
-  const total = targetVisible - v;
-  const left = Math.floor(total / 2);
-  return " ".repeat(left) + str + " ".repeat(total - left);
-}
-
-// ─────────────────────────── box border ───────────────────────────
-
-const TOP_BORDER    = "╭" + "─".repeat(BOX_WIDTH - 2) + "╮";
-const BOTTOM_BORDER = "╰" + "─".repeat(BOX_WIDTH - 2) + "╯";
-const borderColor = (s) => rgb(PALETTE.violetDeep) + s + RESET;
-const row = (content) => borderColor("│") + " " + content + " " + borderColor("│");
-const emptyRow = () => row(" ".repeat(INNER_WIDTH));
 
 // ─────────────────────────── subtitle ───────────────────────────
 
@@ -281,23 +218,22 @@ function subtitleRows({ version, calibrationVersion, testCount = 139 }) {
 }
 
 // ─────────────────────────── frame composition ───────────────────────────
+//
+// No border. Each line gets a 4-space left indent so the wordmark
+// breathes against the terminal edge.
+
+const INDENT = "    ";
 
 function composeFrameLines({ wordmarkColored, subtitle }) {
-  const lines = [];
-  lines.push(borderColor(TOP_BORDER));
-  lines.push(emptyRow());
-
+  const lines = [""];
   for (const r of wordmarkColored) {
-    lines.push(row(padRight(padCenter(r, INNER_WIDTH), INNER_WIDTH)));
+    lines.push(INDENT + r);
   }
-  lines.push(emptyRow());
-
+  lines.push("");
   for (const s of subtitle) {
-    lines.push(row(padRight(padCenter(s, INNER_WIDTH), INNER_WIDTH)));
+    lines.push(INDENT + s);
   }
-
-  lines.push(emptyRow());
-  lines.push(borderColor(BOTTOM_BORDER));
+  lines.push("");
   return lines;
 }
 
