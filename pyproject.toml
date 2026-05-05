@@ -32,56 +32,40 @@ classifiers = [
     "Typing :: Typed",
 ]
 requires-python = ">=3.11"
+# ---------------------------------------------------------------------------
+# Core dependencies — verified by grepping the source: every package below
+# is imported somewhere in skills/ or backtest/. Heavier libraries that are
+# only needed for specific connectors or signals live in extras.
+# ---------------------------------------------------------------------------
 dependencies = [
-    # Data & Math
+    # Data & numerical
     "numpy>=1.26",
     "pandas>=2.1",
-    "scipy>=1.11",
-    "numba>=0.58",
-    # Trading & Markets
-    "ccxt>=4.2",
-    "yfinance>=0.2",
-    "pandas-ta>=0.3",
-    # ML & Deep Learning
-    "torch>=2.1",
-    "timm>=0.9",
-    "torchvision>=0.16",
-    "stable-baselines3>=2.2",
-    "gymnasium>=0.29",
-    # Web3
-    "web3>=7.0",
-    "eth-account>=0.10",
-    "py-solc-x>=1.12",
-    # Visualization
-    "matplotlib>=3.8",
-    "mplfinance>=0.12",
-    "plotly>=5.18",
-    # Utilities
+    # Type system + validation
     "pydantic>=2.5",
-    "pydantic-settings>=2.1",
-    "pyyaml>=6.0",
-    "python-dotenv>=1.0",
+    # Logging + retry + config
     "structlog>=23.2",
-    "orjson>=3.9",
     "tenacity>=8.2",
-    "httpx>=0.25",
-    "websockets>=12.0",
+    "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
+# pip install ".[trading]"  — CEX market data + order routing.
+trading = [
+    "ccxt>=4.2",
+]
+# pip install ".[web3]"     — DEX execution, signing, gas.
+web3 = [
+    "web3>=7.0",
+    "eth-account>=0.10",
+]
+# pip install ".[advanced]" — TDA, evolutionary signals (heavy native deps).
 advanced = [
-    # Advanced Math & TDA
     "ripser>=0.6",
     "persim>=0.3",
-    "giotto-tda>=0.6",
-    "gudhi>=3.9",
-    # Evolutionary
     "deap>=1.4",
-    "gplearn>=0.4",
-    # Tensor Networks
-    "tensornetwork>=0.4",
-    "quimb>=0.4",
 ]
+# pip install ".[dev]"      — test + lint + type check toolchain.
 dev = [
     "pytest>=7.4",
     "pytest-asyncio>=0.21",
@@ -91,11 +75,25 @@ dev = [
     "ruff>=0.1",
     "black>=23.12",
     "pre-commit>=3.6",
+    # Tests exercise CCXT + Web3 connectors, so they need the runtime extras.
+    "ccxt>=4.2",
+    "web3>=7.0",
+    "eth-account>=0.10",
 ]
+# pip install ".[security]" — Solidity static analysis (heavy; not for CI).
 security = [
     "slither-analyzer>=0.10",
     "halmos>=0.4",
     "mythril>=0.23",
+]
+# pip install ".[all]"      — everything except security tooling.
+all = [
+    "ccxt>=4.2",
+    "web3>=7.0",
+    "eth-account>=0.10",
+    "ripser>=0.6",
+    "persim>=0.3",
+    "deap>=1.4",
 ]
 
 [project.urls]
@@ -103,6 +101,38 @@ Homepage = "https://github.com/velonone/MASTER-Trading-Skills"
 Documentation = "https://github.com/velonone/MASTER-Trading-Skills/tree/main/docs"
 Repository = "https://github.com/velonone/MASTER-Trading-Skills"
 Issues = "https://github.com/velonone/MASTER-Trading-Skills/issues"
+
+# ---------------------------------------------------------------------------
+# Hatch build configuration
+# The PyPI distribution name (master-trading-skills) does not match a single
+# top-level directory — we ship two: `skills` and `backtest`. Tell hatchling
+# explicitly so editable / wheel builds succeed in CI.
+# ---------------------------------------------------------------------------
+[tool.hatch.build.targets.wheel]
+packages = ["skills", "backtest"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "skills",
+  "backtest",
+  "examples",
+  "docs",
+  "tests",
+  "SKILL.md",
+  "SKILL_LITE.md",
+  "README.md",
+  "LICENSE",
+  "CHANGELOG.md",
+  "CONTRIBUTING.md",
+  "CODE_OF_CONDUCT.md",
+  "SECURITY.md",
+  "Makefile",
+  "Dockerfile",
+  ".agentignore",
+  "AGENT_MANIFEST.json",
+  "pyproject.toml",
+  "package.json",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
