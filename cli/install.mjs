@@ -25,7 +25,7 @@ import { discoverSkills, resolveDependencies, getSkillById } from "./lib/skills.
 import { installSkill, createSkillManifest } from "./lib/installer.mjs";
 import { ask, closePrompt } from "./lib/prompt.mjs";
 import { multiSelect, singleSelect } from "./lib/multiselect.mjs";
-import { renderBanner, Ceremony } from "./lib/banner.mjs";
+import { animateBanner, renderBanner, Ceremony } from "./lib/banner.mjs";
 import {
   PALETTE,
   RESET,
@@ -117,13 +117,11 @@ function printNextSteps(ceremony, agentId, installPath) {
 async function main() {
   const args = parseArgs();
 
-  // ─── 1. Banner
-  console.log(
-    renderBanner({
-      version: PKG.version,
-      calibrationVersion: CALIBRATION_VERSION,
-    }),
-  );
+  // ─── 1. Animated banner (rotating-gradient logo + framed box)
+  await animateBanner({
+    version: PKG.version,
+    calibrationVersion: CALIBRATION_VERSION,
+  });
 
   // ─── 2. Project tag pill
   const ceremony = new Ceremony("master-trading");
