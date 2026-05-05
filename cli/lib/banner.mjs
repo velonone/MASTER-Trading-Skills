@@ -1,26 +1,24 @@
 /**
- * VelonLabs Banner — borderless ALL-CAPS wordmark
- * ===================================================
- * Layout (no frame, just typography):
+ * VelonLabs Banner — pre-rendered animation + 3D ridges
+ * =======================================================
+ * Runs the user-designed 30-frame VELONLABS animation (each frame is
+ * a multi-line ANSI string built from `▓`/`░` cells with truecolor
+ * escapes) and frames it with two extra layers for depth:
  *
- *      ██  ██  █████  ██      █████  ██  ██  ██      █████  █████  █████
- *      ██  ██  ██     ██      ██  ██ ██▓ ██  ██      ██  ██ ██  ██ ██
- *      ██  ██  ██     ██      ██  ██ ██████  ██      ██████ █████  █████
- *      ██  ██  ████   ██      ██▓▓██ ██████  ██      ██▓▓██ ██  ██     ██
- *       ████   ██     ██      ██▓▓██ ██ ███  ██      ██  ██ ██  ██     ██
- *        ██    █████  █████   █████  ██  ██  █████   ██  ██ █████  █████
+ *   ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔  ← highlight ridge (cap-top)
+ *   [animated VELONLABS frames cycle here]
+ *   ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁  ← shadow ridge (baseline)
  *
- *      M A S T E R    ·    T R A D I N G    ·    S K I L L S
- *      v3.1.0  ·  139 tests  ·  MIT  ·  calibration v2026.05
+ *   M A S T E R  ·  T R A D I N G  ·  S K I L L S
+ *   v3.1.0 · 139 tests · MIT · calibration v2026.05
  *
- * Two-layer letterform (OpenCode-derived structure, our colours):
- *   - Outline cells `█` carry the row-gradient + horizontal sheen.
- *   - Inner-fill cells `▓` (encoded in FONT, rendered as full blocks)
- *     anchor to the deepest violet stop — high contrast against the
- *     outline so the layering reads even at small sizes.
+ * The two ridges read as a "raised plate" the wordmark sits on — bright
+ * on top (light from above), dark on bottom (cast shadow). Combined with
+ * the per-frame colour cycling inside the wordmark, the whole banner
+ * has a clear 3D feel without needing actual perspective rendering.
  *
- * Animation: 1.6 s sheen sweep on truecolor TTYs, then settle. CI /
- * pipes / no-color terminals get a single static render.
+ * Animation runs only on truecolor TTYs; no-color terminals get a
+ * single static render of frame 0 with the ridges flattened to grey.
  */
 
 import {
@@ -37,172 +35,52 @@ import {
   colorEnabled,
   supportsTrueColorOutput,
 } from "./colors.mjs";
+import { FRAMES as RAW_FRAMES, NATIVE_FPS } from "./banner-frames.mjs";
 
-// ─────────────────────────── 6-row uppercase font ───────────────────────────
+// ─────────────────────────── frame preprocessing ───────────────────────────
 //
-// Every glyph is 6 rows × 6 cols, 2-col strokes. "▓" marks inner-fill cells
-// (the decorative dark block from OpenCode-style two-path layering).
+// Each raw frame ends with two source-design footer lines we don't want
+// (the original was a "design system framework" wordmark). Strip them
+// so we only keep the wordmark rows; banner.mjs supplies its own
+// subtitle below.
 
-const FONT = {
-  V: [
-    "██  ██",
-    "██  ██",
-    "██  ██",
-    "██  ██",
-    " ████ ",
-    "  ██  ",
-  ],
-  E: [
-    "██████",
-    "██    ",
-    "██    ",
-    "████  ",
-    "██▓▓  ",
-    "██████",
-  ],
-  L: [
-    "██    ",
-    "██    ",
-    "██    ",
-    "██    ",
-    "██▓▓  ",
-    "██████",
-  ],
-  O: [
-    "██████",
-    "██  ██",
-    "██  ██",
-    "██▓▓██",
-    "██▓▓██",
-    "██████",
-  ],
-  N: [
-    "██  ██",
-    "███ ██",
-    "██████",
-    "██████",
-    "██ ███",
-    "██  ██",
-  ],
-  A: [
-    " ████ ",
-    "██  ██",
-    "██████",
-    "██▓▓██",
-    "██  ██",
-    "██  ██",
-  ],
-  B: [
-    "█████ ",
-    "██  ██",
-    "█████ ",
-    "██▓▓██",
-    "██▓▓██",
-    "█████ ",
-  ],
-  S: [
-    "██████",
-    "██    ",
-    "█████ ",
-    "    ██",
-    "    ██",
-    "██████",
-  ],
-  " ": [
-    "      ",
-    "      ",
-    "      ",
-    "      ",
-    "      ",
-    "      ",
-  ],
-};
-
-const WORDMARK_TEXT = "VELONLABS";
-const WORDMARK_GAP = 2;
-
-function buildWordmark(text) {
-  const rows = ["", "", "", "", "", ""];
-  const sep = " ".repeat(WORDMARK_GAP);
-  const chars = text.split("");
-  chars.forEach((ch, idx) => {
-    const glyph = FONT[ch] || FONT[" "];
-    for (let r = 0; r < 6; r++) {
-      rows[r] += glyph[r];
-      if (idx < chars.length - 1) rows[r] += sep;
-    }
-  });
-  return rows;
+function stripFooter(frame) {
+  // The wordmark is the first 10 lines; everything after the first
+  // blank line is footer text.
+  const lines = frame.split("\n");
+  const idx = lines.findIndex((l) => l.trim() === "");
+  return idx > 0 ? lines.slice(0, idx).join("\n") : frame;
 }
 
-const WORDMARK_ROWS = buildWordmark(WORDMARK_TEXT);
-const WORDMARK_WIDTH = WORDMARK_ROWS[0].length;
+const FRAMES = RAW_FRAMES.map(stripFooter);
+const WORDMARK_LINE_COUNT = FRAMES[0].split("\n").length;
 
-// ─────────────────────────── colour ramp ───────────────────────────
-
-const RAMP = [
-  [232, 220, 255], // 0 — highlight
-  [200, 180, 255], // 1
-  [160, 128, 255], // 2
-  [124,  92, 255], // 3 — brand
-  [ 88,  64, 212], // 4
-  [ 58,  42, 143], // 5 — shadow
-];
-
-// Inner-fill anchor: even darker than RAMP[5] so the layering pops.
-const INNER_FILL_BASE = [28, 14, 70];   // very deep violet, near-black
-const INNER_FILL_LIFT = [60, 36, 120];  // slight breathing toward this
-
-const lerp = (a, b, t) => a + (b - a) * t;
-const mix = (a, b, t) => [
-  Math.round(lerp(a[0], b[0], t)),
-  Math.round(lerp(a[1], b[1], t)),
-  Math.round(lerp(a[2], b[2], t)),
-];
-
-function outlineColor(rowIdx, col, rowLen, frame) {
-  const baseStop = rowIdx;
-  const sheen = Math.sin((col / rowLen) * Math.PI * 2 + frame * 0.16);
-  const fStop = Math.max(0, Math.min(RAMP.length - 1, baseStop - sheen * 0.7));
-  const lo = Math.floor(fStop);
-  const hi = Math.min(RAMP.length - 1, lo + 1);
-  return mix(RAMP[lo], RAMP[hi], fStop - lo);
-}
-
-function innerFillColor(col, rowLen, frame) {
-  const sheen = Math.sin((col / rowLen) * Math.PI * 2 + frame * 0.16);
-  // Mostly INNER_FILL_BASE; subtle 30 % lift on bright sheen pass.
-  const t = Math.max(0, Math.min(1, (1 + sheen) * 0.15));
-  return mix(INNER_FILL_BASE, INNER_FILL_LIFT, t);
-}
-
-function colorizeWordmark(rows, frame) {
-  if (!colorEnabled) return rows.map((r) => r.replace(/▓/g, "█"));
-  return rows.map((row, rowIdx) => {
-    let out = "";
-    for (let col = 0; col < row.length; col++) {
-      const ch = row[col];
-      if (ch === " ") { out += ch; continue; }
-      if (ch === "▓") {
-        out += rgb(innerFillColor(col, row.length, frame)) + "█" + RESET;
-        continue;
-      }
-      out += rgb(outlineColor(rowIdx, col, row.length, frame)) + ch + RESET;
-    }
-    return out + RESET;
-  });
-}
-
-// ─────────────────────────── escape-aware width ───────────────────────────
-
+// Compute the visible width of the wordmark (after stripping ANSI).
 function visibleLength(str) {
   // eslint-disable-next-line no-control-regex
   return str.replace(/\x1b\[[0-9;]*m/g, "").length;
 }
 
+const WORDMARK_WIDTH = Math.max(
+  ...FRAMES[0].split("\n").map((l) => visibleLength(l)),
+);
+
+// ─────────────────────────── 3D ridges ───────────────────────────
+
+const RIDGE_HIGHLIGHT = [232, 220, 255]; // cap-top edge highlight
+const RIDGE_SHADOW    = [ 32, 18,  68]; // base shadow (almost black)
+
+function ridgeLine(charSet, color) {
+  if (!colorEnabled) return charSet.repeat(WORDMARK_WIDTH);
+  return rgb(color) + charSet.repeat(WORDMARK_WIDTH) + RESET;
+}
+
+const HIGHLIGHT_RIDGE = () => ridgeLine("▔", RIDGE_HIGHLIGHT);
+const SHADOW_RIDGE    = () => ridgeLine("▁", RIDGE_SHADOW);
+
 // ─────────────────────────── subtitle ───────────────────────────
 
-function subtitleRows({ version, calibrationVersion, testCount = 139 }) {
+function subtitleLines({ version, calibrationVersion, testCount = 139 }) {
   const dot = graphite("    ·    ");
   const tagline =
     bold(violet("M A S T E R")) + dot +
@@ -217,22 +95,22 @@ function subtitleRows({ version, calibrationVersion, testCount = 139 }) {
   return [tagline, status];
 }
 
-// ─────────────────────────── frame composition ───────────────────────────
-//
-// No border. Each line gets a 4-space left indent so the wordmark
-// breathes against the terminal edge.
+// ─────────────────────────── compose a printable frame ───────────────────────────
 
 const INDENT = "    ";
 
-function composeFrameLines({ wordmarkColored, subtitle }) {
-  const lines = [""];
-  for (const r of wordmarkColored) {
-    lines.push(INDENT + r);
-  }
+function composeBlock({ wordmark, subtitle }) {
+  const lines = [];
   lines.push("");
-  for (const s of subtitle) {
-    lines.push(INDENT + s);
+  lines.push(INDENT + HIGHLIGHT_RIDGE());
+
+  for (const wm of wordmark.split("\n")) {
+    lines.push(INDENT + wm);
   }
+
+  lines.push(INDENT + SHADOW_RIDGE());
+  lines.push("");
+  for (const s of subtitle) lines.push(INDENT + s);
   lines.push("");
   return lines;
 }
@@ -252,62 +130,58 @@ export async function animateBanner({
   version = "?",
   calibrationVersion = "?",
   testCount = 139,
-  durationMs = 1600,
-  fps = 18,
+  cycles = 1,                    // how many full loops of the FRAMES list
+  fps = NATIVE_FPS,
 } = {}) {
-  const subtitle = subtitleRows({ version, calibrationVersion, testCount });
+  const subtitle = subtitleLines({ version, calibrationVersion, testCount });
 
+  // Static path: render last frame once and return.
   if (!colorEnabled || !supportsTrueColorOutput || !process.stdout.isTTY) {
-    const colored = colorizeWordmark(WORDMARK_ROWS, 0);
-    const lines = composeFrameLines({ wordmarkColored: colored, subtitle });
+    const lines = composeBlock({
+      wordmark: FRAMES[FRAMES.length - 1],
+      subtitle,
+    });
     process.stdout.write(lines.join("\n") + "\n");
     return;
   }
 
   process.stdout.write(HIDE_CURSOR);
 
-  const totalFrames = Math.max(8, Math.floor((durationMs / 1000) * fps));
-  const interval = 1000 / fps;
-
-  let lines = composeFrameLines({
-    wordmarkColored: colorizeWordmark(WORDMARK_ROWS, 0),
-    subtitle,
-  });
+  // Initial paint
+  let lines = composeBlock({ wordmark: FRAMES[0], subtitle });
   process.stdout.write(lines.join("\n") + "\n");
   const totalRows = lines.length;
+
+  const interval = 1000 / fps;
+  const totalFrames = FRAMES.length * Math.max(1, cycles);
 
   for (let f = 1; f < totalFrames; f++) {
     await sleep(interval);
     process.stdout.write(moveUp(totalRows) + moveCol1);
-    lines = composeFrameLines({
-      wordmarkColored: colorizeWordmark(WORDMARK_ROWS, f),
+    lines = composeBlock({
+      wordmark: FRAMES[f % FRAMES.length],
       subtitle,
     });
     process.stdout.write(lines.map((l) => ERASE_LINE + l).join("\n") + "\n");
   }
 
-  process.stdout.write(moveUp(totalRows) + moveCol1);
-  lines = composeFrameLines({
-    wordmarkColored: colorizeWordmark(WORDMARK_ROWS, 0),
-    subtitle,
-  });
-  process.stdout.write(lines.map((l) => ERASE_LINE + l).join("\n") + "\n");
-
   process.stdout.write(SHOW_CURSOR);
 }
 
 export function renderBanner(opts = {}) {
-  const subtitle = subtitleRows({
+  const subtitle = subtitleLines({
     version: opts.version || "?",
     calibrationVersion: opts.calibrationVersion || "?",
     testCount: opts.testCount || 139,
   });
-  const colored = colorizeWordmark(WORDMARK_ROWS, 0);
-  const lines = composeFrameLines({ wordmarkColored: colored, subtitle });
+  const lines = composeBlock({
+    wordmark: FRAMES[FRAMES.length - 1],
+    subtitle,
+  });
   return lines.join("\n");
 }
 
-// ─────────────────────────── ceremony rail ───────────────────────────
+// ─────────────────────────── ceremony rail (unchanged) ───────────────────────────
 
 export class Ceremony {
   constructor(tag = "master-trading") {
