@@ -44,15 +44,21 @@ import { FRAMES as RAW_FRAMES, NATIVE_FPS } from "./banner-frames.mjs";
 // so we only keep the wordmark rows; banner.mjs supplies its own
 // subtitle below.
 
-function stripFooter(frame) {
-  // The wordmark is the first 10 lines; everything after the first
-  // blank line is footer text.
+function cleanFrame(frame) {
+  // 1. Strip the source design's footer text (everything after the first
+  //    blank line) so we keep only the 10-row wordmark.
+  // 2. Replace every "░" with a plain space. In the source data those
+  //    light-shade glyphs appear without colour escapes — they render
+  //    as default-foreground grey haze around the letters and read as
+  //    noise. Spaces let the coloured "▓" cells float on a clean
+  //    background so the letterforms actually pop.
   const lines = frame.split("\n");
   const idx = lines.findIndex((l) => l.trim() === "");
-  return idx > 0 ? lines.slice(0, idx).join("\n") : frame;
+  const wordmarkOnly = idx > 0 ? lines.slice(0, idx) : lines;
+  return wordmarkOnly.map((line) => line.replace(/░/g, " ")).join("\n");
 }
 
-const FRAMES = RAW_FRAMES.map(stripFooter);
+const FRAMES = RAW_FRAMES.map(cleanFrame);
 const WORDMARK_LINE_COUNT = FRAMES[0].split("\n").length;
 
 // Compute the visible width of the wordmark (after stripping ANSI).
@@ -130,7 +136,7 @@ export async function animateBanner({
   version = "?",
   calibrationVersion = "?",
   testCount = 139,
-  cycles = 1,                    // how many full loops of the FRAMES list
+  cycles = 3,                    // ~3.75 s of animation at 24 fps
   fps = NATIVE_FPS,
 } = {}) {
   const subtitle = subtitleLines({ version, calibrationVersion, testCount });
