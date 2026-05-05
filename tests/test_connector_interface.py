@@ -2,11 +2,12 @@
 Tests for unified BaseConnector execution seam (P2).
 """
 
-import pytest
 from decimal import Decimal
 
+import pytest
+
 from skills.core.base import BaseConnector, BaseSkill
-from skills.core.types import ExecutionReport, Order, OrderSide, OrderType, Position
+from skills.core.types import ExecutionReport, Order, OrderSide, OrderType
 from skills.execution.web3.dex_executor import Web3DEXExecutor
 
 
@@ -67,7 +68,7 @@ async def test_web3dex_place_order_with_tokens(dex_executor):
         order_type=OrderType.MARKET,
         quantity=Decimal("1.0"),
         metadata={
-            "token_in": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",   # WETH
+            "token_in": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",  # WETH
             "token_out": "0xdAC17F958D2ee523a2206206994597C13D831ec7",  # USDT
         },
     )
@@ -93,13 +94,15 @@ async def test_web3dex_fetch_position_without_key(dex_executor):
 @pytest.mark.asyncio
 async def test_web3dex_run_dispatch_swap(dex_executor):
     """run() should dispatch swap action."""
-    result = await dex_executor.run({
-        "action": "swap",
-        "token_in": "0x...",
-        "token_out": "0x...",
-        "amount_in": "1.5",
-        "min_amount_out": "1.4",
-    })
+    result = await dex_executor.run(
+        {
+            "action": "swap",
+            "token_in": "0x...",
+            "token_out": "0x...",
+            "amount_in": "1.5",
+            "min_amount_out": "1.4",
+        }
+    )
     assert isinstance(result, str)
     assert result.startswith("0x")
 

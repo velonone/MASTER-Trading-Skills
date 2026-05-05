@@ -9,9 +9,9 @@ Usage:
     from skills.signals.topological.tda import TopologicalCrashDetector  # explicit
 """
 
-from skills.signals.technical.obi import OrderBookImbalance
 from skills.signals.technical.funding_arb import FundingArbitrageSignal
 from skills.signals.technical.kelly import KellyPositionSizer
+from skills.signals.technical.obi import OrderBookImbalance
 
 __all__ = [
     "OrderBookImbalance",

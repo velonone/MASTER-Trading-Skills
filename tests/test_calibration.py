@@ -10,23 +10,20 @@ order and the agent-facing setup skill behaviour.
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
-from unittest import mock
 
 import pytest
 
+from skills.core.types import EventCategory
 from skills.inference.calibration import (
-    CONFIG_PATH,
     ENV_VAR,
+    SETUP_PROMPT,
     Calibration,
     CalibrationNotConfigured,
     CalibrationSource,
-    SETUP_PROMPT,
 )
 from skills.inference.engine import HigherOrderInferenceEngine
 from skills.inference.setup_skill import CalibrationSetupSkill
-from skills.core.types import EventCategory
 
 
 @pytest.fixture
@@ -51,8 +48,13 @@ def isolated_config(tmp_path, monkeypatch):
 
 def test_snapshot_contains_all_required_sections():
     cal = Calibration.velonlabs_snapshot()
-    for key in ("primitives", "causal_chains", "singularity_weights",
-                "signal_thresholds", "convergence_ratios"):
+    for key in (
+        "primitives",
+        "causal_chains",
+        "singularity_weights",
+        "signal_thresholds",
+        "convergence_ratios",
+    ):
         assert key in cal.data, f"snapshot missing {key}"
 
 

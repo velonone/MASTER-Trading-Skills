@@ -8,7 +8,7 @@ ensuring a uniform interface for the Agent runtime.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from skills.core.types import (
     ExecutionReport,
@@ -24,10 +24,11 @@ class BaseSkill(ABC):
     """
     Minimal contract for any skill loadable by the SkillRegistry.
     """
+
     name: str = ""
     description: str = ""
     version: str = "1.0.0"
-    triggers: List[str] = []
+    triggers: list[str] = []
 
     async def start(self) -> None:
         """Lifecycle hook called before the skill begins serving requests."""
@@ -37,12 +38,12 @@ class BaseSkill(ABC):
         """Lifecycle hook called when the skill is being shut down."""
         pass
 
-    def health(self) -> Dict[str, Any]:
+    def health(self) -> dict[str, Any]:
         """Return health status for observability."""
         return {"status": "ok", "skill": self.name, "version": self.version}
 
     @abstractmethod
-    async def run(self, context: Dict[str, Any]) -> Any:
+    async def run(self, context: dict[str, Any]) -> Any:
         """Execute the skill with the provided context."""
         ...
 
@@ -52,19 +53,20 @@ class BaseStrategy(BaseSkill):
     Base for all signal-generation strategies.
     Emits standardized Signal objects from context.
     """
-    name: str = "base_strategy"
-    supported_timeframes: List[str] = ["1h", "4h", "1d"]
 
-    async def run(self, context: Dict[str, Any]) -> Any:
+    name: str = "base_strategy"
+    supported_timeframes: list[str] = ["1h", "4h", "1d"]
+
+    async def run(self, context: dict[str, Any]) -> Any:
         """Default agent dispatch runner — delegates to generate_signals()."""
         return self.generate_signals(context)
 
     @abstractmethod
-    def generate_signals(self, context: Dict[str, Any]) -> List[Signal]:
+    def generate_signals(self, context: dict[str, Any]) -> list[Signal]:
         """Generate signals from a context dict."""
         ...
 
-    async def warmup(self, data: List[MarketData]) -> None:
+    async def warmup(self, data: list[MarketData]) -> None:
         """Optional warmup / state initialization (e.g. indicators)."""
         pass
 
@@ -74,9 +76,10 @@ class BaseRiskManager(BaseSkill):
     Base for risk-management modules.
     Intercepts signals and orders before execution.
     """
+
     name: str = "base_risk_manager"
 
-    async def run(self, context: Dict[str, Any]) -> Any:
+    async def run(self, context: dict[str, Any]) -> Any:
         """Default agent dispatch runner. Routes to evaluate_signal or evaluate_order."""
         if "signal" in context:
             result = await self.evaluate_signal(context["signal"], context.get("position"))
@@ -87,7 +90,7 @@ class BaseRiskManager(BaseSkill):
         return {"error": "No signal or order in context"}
 
     @abstractmethod
-    async def evaluate_signal(self, signal: Signal, position: Optional[Position]) -> Signal:
+    async def evaluate_signal(self, signal: Signal, position: Position | None) -> Signal:
         """
         Return the signal unchanged, modified, or flatted to HOLD
         based on risk constraints.
@@ -95,7 +98,7 @@ class BaseRiskManager(BaseSkill):
         ...
 
     @abstractmethod
-    async def evaluate_order(self, order: Order, limits: Optional[RiskLimit] = None) -> Optional[Order]:
+    async def evaluate_order(self, order: Order, limits: RiskLimit | None = None) -> Order | None:
         """Return the order, a modified order, or None if rejected."""
         ...
 
@@ -109,24 +112,23 @@ class BaseConnector(BaseSkill):
     Base for exchange / DEX connectors.
     Normalizes every venue into the same MarketData / Order / Trade schema.
     """
+
     name: str = "base_connector"
     venue: str = ""
 
     @abstractmethod
-    async def fetch_ohlcv(self, symbol: str, timeframe: str, limit: int = 100) -> List[MarketData]:
-        ...
+    async def fetch_ohlcv(
+        self, symbol: str, timeframe: str, limit: int = 100
+    ) -> list[MarketData]: ...
 
     @abstractmethod
-    async def place_order(self, order: Order) -> ExecutionReport:
-        ...
+    async def place_order(self, order: Order) -> ExecutionReport: ...
 
     @abstractmethod
-    async def cancel_order(self, order_id: str, symbol: str) -> ExecutionReport:
-        ...
+    async def cancel_order(self, order_id: str, symbol: str) -> ExecutionReport: ...
 
     @abstractmethod
-    async def fetch_position(self, symbol: str) -> Optional[Position]:
-        ...
+    async def fetch_position(self, symbol: str) -> Position | None: ...
 
     async def stream_ticks(self, symbol: str):
         """Async generator for real-time tick data (optional)."""

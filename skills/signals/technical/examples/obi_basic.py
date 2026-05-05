@@ -3,6 +3,7 @@ Example: Order Book Imbalance Signal
 =====================================
 Run: python -m skills.signals.technical.examples.obi_basic
 """
+
 from skills.signals.technical.obi import OrderBookImbalance
 
 
@@ -20,11 +21,13 @@ def main():
     print(f"Evidence: {signal.evidence}")
 
     # Unified interface (Agent dispatch)
-    signals = obi.generate_signals({
-        "symbol": "BTC/USDT",
-        "bids": [[65000, 10.0]],
-        "asks": [[65010, 1.0]],
-    })
+    signals = obi.generate_signals(
+        {
+            "symbol": "BTC/USDT",
+            "bids": [[65000, 10.0]],
+            "asks": [[65010, 1.0]],
+        }
+    )
     print(f"Unified: {signals[0].action.value}")
 
 

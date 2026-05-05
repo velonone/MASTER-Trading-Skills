@@ -8,6 +8,7 @@ Threshold default: ±0.03% (30 bps) per 8h interval ≈ 32.85% annualized.
 """
 
 from decimal import Decimal
+
 from skills.core.base import BaseStrategy
 from skills.core.types import Signal, SignalAction
 
@@ -26,25 +27,38 @@ class FundingArbitrageSignal(BaseStrategy):
     def generate_signals(self, context: dict) -> list:
         """Unified interface -- delegates to generate()."""
         from decimal import Decimal
-        return [self.generate(
-            symbol=context.get("symbol", "BTC/USDT"),
-            funding_rate=Decimal(str(context.get("funding_rate", 0))),
-            annualized_estimate=Decimal(str(context.get("annualized_estimate", 0))) if context.get("annualized_estimate") else None,
-        )]
+
+        return [
+            self.generate(
+                symbol=context.get("symbol", "BTC/USDT"),
+                funding_rate=Decimal(str(context.get("funding_rate", 0))),
+                annualized_estimate=(
+                    Decimal(str(context.get("annualized_estimate", 0)))
+                    if context.get("annualized_estimate")
+                    else None
+                ),
+            )
+        ]
 
     async def run(self, context: dict) -> Signal:
         """Agent dispatch entrypoint."""
         signals = self.generate_signals(context)
-        return signals[0] if signals else Signal(
-            action=SignalAction.HOLD,
-            confidence=0.0,
-            strength=0.0,
-            symbol=context.get("symbol", "BTC/USDT"),
-            source=self.name,
-            evidence=["No signal generated"],
+        return (
+            signals[0]
+            if signals
+            else Signal(
+                action=SignalAction.HOLD,
+                confidence=0.0,
+                strength=0.0,
+                symbol=context.get("symbol", "BTC/USDT"),
+                source=self.name,
+                evidence=["No signal generated"],
+            )
         )
 
-    def generate(self, symbol: str, funding_rate: Decimal, annualized_estimate: Decimal | None = None) -> Signal:
+    def generate(
+        self, symbol: str, funding_rate: Decimal, annualized_estimate: Decimal | None = None
+    ) -> Signal:
         """
         Args:
             funding_rate: Current 8h funding rate (e.g. 0.0003 = 0.03%).
@@ -74,7 +88,9 @@ class FundingArbitrageSignal(BaseStrategy):
             metadata={
                 "funding_rate_8h": fr,
                 "threshold": th,
-                "annualized_estimate": float(annualized_estimate) if annualized_estimate else fr * 3 * 365,
+                "annualized_estimate": (
+                    float(annualized_estimate) if annualized_estimate else fr * 3 * 365
+                ),
             },
             evidence=[evidence],
         )

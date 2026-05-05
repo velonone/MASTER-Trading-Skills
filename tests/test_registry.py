@@ -3,6 +3,7 @@ Unit tests for SkillRegistry — discovery, loading, and dispatch.
 """
 
 import pytest
+
 from skills.core.registry import SkillRegistry
 
 

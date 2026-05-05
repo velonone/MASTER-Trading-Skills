@@ -5,10 +5,7 @@ Tests for SkillPack metadata parser (P3).
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from skills.core.skillpack import (
-    SkillPackMetadata,
     discover_skillpacks,
     parse_skill_md,
 )

@@ -2,18 +2,21 @@
 Unit tests for skills.execution — OMS & Risk Management.
 """
 
-import asyncio
-import pytest
 from decimal import Decimal
+
+import pytest
+
+from skills.core.types import Order, OrderSide, OrderType, RiskLimit, Signal, SignalAction
 from skills.execution.oms import OrderManagementSystem
 from skills.execution.risk import DynamicRiskManager
-from skills.core.types import Order, OrderSide, OrderType, Signal, SignalAction, RiskLimit
 
 
 @pytest.mark.asyncio
 async def test_oms_order_submission():
     oms = OrderManagementSystem()
-    order = Order(symbol="BTC/USDT", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=Decimal("0.1"))
+    order = Order(
+        symbol="BTC/USDT", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=Decimal("0.1")
+    )
     oid = await oms.submit(order)
     assert oid.startswith("mt-")
     assert oms.orders[oid].symbol == "BTC/USDT"
@@ -23,7 +26,14 @@ async def test_oms_order_submission():
 async def test_oms_position_reconciliation():
     oms = OrderManagementSystem()
     from skills.core.types import ExecutionReport
-    order = Order(id="test-1", symbol="BTC/USDT", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=Decimal("1.0"))
+
+    order = Order(
+        id="test-1",
+        symbol="BTC/USDT",
+        side=OrderSide.BUY,
+        order_type=OrderType.MARKET,
+        quantity=Decimal("1.0"),
+    )
     report = ExecutionReport(
         order=order,
         status="FILLED",
@@ -54,8 +64,12 @@ async def test_risk_manager_allows_high_confidence():
 
 @pytest.mark.asyncio
 async def test_risk_velocity_limit():
-    risk = DynamicRiskManager(limits=RiskLimit(max_position_size=Decimal("10"), max_orders_per_minute=2))
-    order = Order(symbol="BTC/USDT", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=Decimal("1.0"))
+    risk = DynamicRiskManager(
+        limits=RiskLimit(max_position_size=Decimal("10"), max_orders_per_minute=2)
+    )
+    order = Order(
+        symbol="BTC/USDT", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=Decimal("1.0")
+    )
     o1 = await risk.evaluate_order(order)
     o2 = await risk.evaluate_order(order)
     o3 = await risk.evaluate_order(order)
@@ -80,7 +94,10 @@ def test_signal_to_order_conversion():
 
 def _fill(oid: str, symbol: str, side: OrderSide, qty: str, price: str):
     from skills.core.types import ExecutionReport
-    order = Order(id=oid, symbol=symbol, side=side, order_type=OrderType.MARKET, quantity=Decimal(qty))
+
+    order = Order(
+        id=oid, symbol=symbol, side=side, order_type=OrderType.MARKET, quantity=Decimal(qty)
+    )
     return ExecutionReport(
         order=order,
         status="FILLED",

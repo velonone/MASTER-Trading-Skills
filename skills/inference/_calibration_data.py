@@ -24,10 +24,9 @@ downstream documentation, audit logs, or research output.
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
-
-VELONLABS_SNAPSHOT_2026_05: Dict[str, Any] = {
+VELONLABS_SNAPSHOT_2026_05: dict[str, Any] = {
     # ------------------------------------------------------------------
     # Provenance
     # ------------------------------------------------------------------
@@ -44,7 +43,6 @@ VELONLABS_SNAPSHOT_2026_05: Dict[str, Any] = {
         "Calibration values released under MIT alongside code. "
         "Attribution requested in published research and commercial use."
     ),
-
     # ------------------------------------------------------------------
     # Inference primitives — base_confidence is the prior before any
     # empirical track record adjusts it (see InferencePrimitive.calibrated_confidence)
@@ -107,129 +105,240 @@ VELONLABS_SNAPSHOT_2026_05: Dict[str, Any] = {
             "tags": ["derivatives", "manipulation", "alert"],
         },
     },
-
     # ------------------------------------------------------------------
     # Causal chains — keyed by "<category>.<sub_pattern>"
     # Each step lists order, confidence, magnitude, direction, asset_scope
     # ------------------------------------------------------------------
     "causal_chains": {
         "whale.exchange_deposit": [
-            {"order": "immediate",   "confidence": 0.85, "direction": "bearish", "magnitude": "medium",
-             "description": "Sell order placement likely within hours",
-             "affected_assets": ["underlying_token"]},
-            {"order": "short_term",  "confidence": 0.75, "direction": "bearish", "magnitude": "medium",
-             "description": "Price pressure as order absorbs bid depth",
-             "affected_assets": ["underlying_token"]},
-            {"order": "medium_term", "confidence": 0.50, "direction": "bearish", "magnitude": "large",
-             "description": "Herding behavior: other whales may follow",
-             "affected_assets": ["underlying_token", "sector_index"]},
-            {"order": "long_term",   "confidence": 0.60, "direction": "neutral", "magnitude": "small",
-             "description": "New equilibrium at lower clearing price",
-             "affected_assets": ["underlying_token"]},
+            {
+                "order": "immediate",
+                "confidence": 0.85,
+                "direction": "bearish",
+                "magnitude": "medium",
+                "description": "Sell order placement likely within hours",
+                "affected_assets": ["underlying_token"],
+            },
+            {
+                "order": "short_term",
+                "confidence": 0.75,
+                "direction": "bearish",
+                "magnitude": "medium",
+                "description": "Price pressure as order absorbs bid depth",
+                "affected_assets": ["underlying_token"],
+            },
+            {
+                "order": "medium_term",
+                "confidence": 0.50,
+                "direction": "bearish",
+                "magnitude": "large",
+                "description": "Herding behavior: other whales may follow",
+                "affected_assets": ["underlying_token", "sector_index"],
+            },
+            {
+                "order": "long_term",
+                "confidence": 0.60,
+                "direction": "neutral",
+                "magnitude": "small",
+                "description": "New equilibrium at lower clearing price",
+                "affected_assets": ["underlying_token"],
+            },
         ],
         "whale.accumulation": [
-            {"order": "immediate",   "confidence": 0.80, "direction": "bullish", "magnitude": "small",
-             "description": "Buying pressure incrementally absorbs ask depth",
-             "affected_assets": ["underlying_token"]},
-            {"order": "short_term",  "confidence": 0.85, "direction": "bullish", "magnitude": "medium",
-             "description": "Exchange supply decreases; supply squeeze forms",
-             "affected_assets": ["underlying_token"]},
-            {"order": "medium_term", "confidence": 0.65, "direction": "bullish", "magnitude": "large",
-             "description": "Price discovery shifts to higher equilibrium",
-             "affected_assets": ["underlying_token"]},
+            {
+                "order": "immediate",
+                "confidence": 0.80,
+                "direction": "bullish",
+                "magnitude": "small",
+                "description": "Buying pressure incrementally absorbs ask depth",
+                "affected_assets": ["underlying_token"],
+            },
+            {
+                "order": "short_term",
+                "confidence": 0.85,
+                "direction": "bullish",
+                "magnitude": "medium",
+                "description": "Exchange supply decreases; supply squeeze forms",
+                "affected_assets": ["underlying_token"],
+            },
+            {
+                "order": "medium_term",
+                "confidence": 0.65,
+                "direction": "bullish",
+                "magnitude": "large",
+                "description": "Price discovery shifts to higher equilibrium",
+                "affected_assets": ["underlying_token"],
+            },
         ],
         "protocol.generic": [
-            {"order": "immediate",   "confidence": 0.90, "direction": "neutral", "magnitude": "small",
-             "description": "Market participants evaluate impact on positions",
-             "affected_assets": ["protocol_token"]},
-            {"order": "short_term",  "confidence": 0.75, "direction": "neutral", "magnitude": "medium",
-             "description": "Capital reallocation across competing protocols begins",
-             "affected_assets": ["protocol_token", "competitors"]},
-            {"order": "medium_term", "confidence": 0.70, "direction": "neutral", "magnitude": "medium",
-             "description": "New yield/utility equilibrium established",
-             "affected_assets": ["defi_sector"]},
+            {
+                "order": "immediate",
+                "confidence": 0.90,
+                "direction": "neutral",
+                "magnitude": "small",
+                "description": "Market participants evaluate impact on positions",
+                "affected_assets": ["protocol_token"],
+            },
+            {
+                "order": "short_term",
+                "confidence": 0.75,
+                "direction": "neutral",
+                "magnitude": "medium",
+                "description": "Capital reallocation across competing protocols begins",
+                "affected_assets": ["protocol_token", "competitors"],
+            },
+            {
+                "order": "medium_term",
+                "confidence": 0.70,
+                "direction": "neutral",
+                "magnitude": "medium",
+                "description": "New yield/utility equilibrium established",
+                "affected_assets": ["defi_sector"],
+            },
         ],
         "listing.generic": [
-            {"order": "immediate",   "confidence": 0.95, "direction": "bullish", "magnitude": "large",
-             "description": "Price spike from news-driven demand shock",
-             "affected_assets": ["listed_token"]},
-            {"order": "short_term",  "confidence": 0.90, "direction": "neutral", "magnitude": "medium",
-             "description": "Arbitrage between DEX and CEX tightens spread",
-             "affected_assets": ["listed_token"]},
-            {"order": "medium_term", "confidence": 0.80, "direction": "bearish", "magnitude": "medium",
-             "description": "Early holders distribute to new retail entrants",
-             "affected_assets": ["listed_token"]},
-            {"order": "long_term",   "confidence": 0.60, "direction": "neutral", "magnitude": "small",
-             "description": "New price floor established post-distribution",
-             "affected_assets": ["listed_token"]},
+            {
+                "order": "immediate",
+                "confidence": 0.95,
+                "direction": "bullish",
+                "magnitude": "large",
+                "description": "Price spike from news-driven demand shock",
+                "affected_assets": ["listed_token"],
+            },
+            {
+                "order": "short_term",
+                "confidence": 0.90,
+                "direction": "neutral",
+                "magnitude": "medium",
+                "description": "Arbitrage between DEX and CEX tightens spread",
+                "affected_assets": ["listed_token"],
+            },
+            {
+                "order": "medium_term",
+                "confidence": 0.80,
+                "direction": "bearish",
+                "magnitude": "medium",
+                "description": "Early holders distribute to new retail entrants",
+                "affected_assets": ["listed_token"],
+            },
+            {
+                "order": "long_term",
+                "confidence": 0.60,
+                "direction": "neutral",
+                "magnitude": "small",
+                "description": "New price floor established post-distribution",
+                "affected_assets": ["listed_token"],
+            },
         ],
         "hack.generic": [
-            {"order": "immediate",   "confidence": 0.95, "direction": "bearish", "magnitude": "extreme",
-             "description": "Attacker dumps stolen tokens immediately",
-             "affected_assets": ["hacked_token"]},
-            {"order": "short_term",  "confidence": 0.85, "direction": "bearish", "magnitude": "large",
-             "description": "Contagion fear spreads to similar protocols",
-             "affected_assets": ["similar_protocols"]},
-            {"order": "medium_term", "confidence": 0.70, "direction": "bearish", "magnitude": "large",
-             "description": "TVL exodus from entire vertical",
-             "affected_assets": ["sector"]},
-            {"order": "long_term",   "confidence": 0.75, "direction": "bullish", "magnitude": "medium",
-             "description": "Survivors capture market share",
-             "affected_assets": ["surviving_protocols"]},
+            {
+                "order": "immediate",
+                "confidence": 0.95,
+                "direction": "bearish",
+                "magnitude": "extreme",
+                "description": "Attacker dumps stolen tokens immediately",
+                "affected_assets": ["hacked_token"],
+            },
+            {
+                "order": "short_term",
+                "confidence": 0.85,
+                "direction": "bearish",
+                "magnitude": "large",
+                "description": "Contagion fear spreads to similar protocols",
+                "affected_assets": ["similar_protocols"],
+            },
+            {
+                "order": "medium_term",
+                "confidence": 0.70,
+                "direction": "bearish",
+                "magnitude": "large",
+                "description": "TVL exodus from entire vertical",
+                "affected_assets": ["sector"],
+            },
+            {
+                "order": "long_term",
+                "confidence": 0.75,
+                "direction": "bullish",
+                "magnitude": "medium",
+                "description": "Survivors capture market share",
+                "affected_assets": ["surviving_protocols"],
+            },
         ],
         "liquidation.cascade": [
-            {"order": "immediate",   "confidence": 0.95, "direction": "bearish", "magnitude": "extreme",
-             "description": "Liquidation bots trigger stop-market orders",
-             "affected_assets": ["liquidated_asset"]},
-            {"order": "short_term",  "confidence": 0.88, "direction": "bearish", "magnitude": "extreme",
-             "description": "Cascading deleveraging as underwater positions close",
-             "affected_assets": ["liquidated_asset", "correlated_assets"]},
-            {"order": "medium_term", "confidence": 0.70, "direction": "neutral", "magnitude": "medium",
-             "description": "Funding rates turn highly negative; shorts pay longs",
-             "affected_assets": ["perpetual_markets"]},
-            {"order": "long_term",   "confidence": 0.55, "direction": "bullish", "magnitude": "large",
-             "description": "Capitulation bottom; mean reversion setup",
-             "affected_assets": ["liquidated_asset"]},
+            {
+                "order": "immediate",
+                "confidence": 0.95,
+                "direction": "bearish",
+                "magnitude": "extreme",
+                "description": "Liquidation bots trigger stop-market orders",
+                "affected_assets": ["liquidated_asset"],
+            },
+            {
+                "order": "short_term",
+                "confidence": 0.88,
+                "direction": "bearish",
+                "magnitude": "extreme",
+                "description": "Cascading deleveraging as underwater positions close",
+                "affected_assets": ["liquidated_asset", "correlated_assets"],
+            },
+            {
+                "order": "medium_term",
+                "confidence": 0.70,
+                "direction": "neutral",
+                "magnitude": "medium",
+                "description": "Funding rates turn highly negative; shorts pay longs",
+                "affected_assets": ["perpetual_markets"],
+            },
+            {
+                "order": "long_term",
+                "confidence": 0.55,
+                "direction": "bullish",
+                "magnitude": "large",
+                "description": "Capitulation bottom; mean reversion setup",
+                "affected_assets": ["liquidated_asset"],
+            },
         ],
         "generic.unknown": [
-            {"order": "immediate", "confidence": 0.50, "direction": "neutral", "magnitude": "small",
-             "description": "Initial market reaction undetermined",
-             "affected_assets": ["general"]},
+            {
+                "order": "immediate",
+                "confidence": 0.50,
+                "direction": "neutral",
+                "magnitude": "small",
+                "description": "Initial market reaction undetermined",
+                "affected_assets": ["general"],
+            },
         ],
     },
-
     # ------------------------------------------------------------------
     # Singularity scoring — what makes an event "system-altering"
     # ------------------------------------------------------------------
     "singularity_weights": {
-        "affects_core_assets":   0.30,
+        "affects_core_assets": 0.30,
         "is_private_information": 0.20,
-        "has_leverage_exposure":  0.25,
+        "has_leverage_exposure": 0.25,
         "magnitude": {
-            "small":   0.0,
-            "medium":  0.10,
-            "large":   0.20,
+            "small": 0.0,
+            "medium": 0.10,
+            "large": 0.20,
             "extreme": 0.30,
         },
         "threshold": 0.50,
     },
-
     # ------------------------------------------------------------------
     # Signal generation thresholds — bridge from confidence to action
     # ------------------------------------------------------------------
     "signal_thresholds": {
-        "hold_below":          0.30,   # < this → HOLD
-        "buy_above":           0.60,   # ≥ this → BUY (if bullish)
-        "sell_above":          0.60,   # ≥ this → SELL (if bearish)
-        "confidence_floor":    0.55,   # risk manager suppresses signals below this
-        "chain_length_decay":  0.95,   # multiplicative penalty per causal step
+        "hold_below": 0.30,  # < this → HOLD
+        "buy_above": 0.60,  # ≥ this → BUY (if bullish)
+        "sell_above": 0.60,  # ≥ this → SELL (if bearish)
+        "confidence_floor": 0.55,  # risk manager suppresses signals below this
+        "chain_length_decay": 0.95,  # multiplicative penalty per causal step
     },
-
     # ------------------------------------------------------------------
     # Convergence detection — when does a chain "agree" on direction?
     # ------------------------------------------------------------------
     "convergence_ratios": {
-        "bullish_factor": 1.5,         # bullish_sum > bearish_sum * 1.5
+        "bullish_factor": 1.5,  # bullish_sum > bearish_sum * 1.5
         "bearish_factor": 1.5,
     },
 }

@@ -8,8 +8,6 @@ inventory risk, latency arbitrage).
 Reference: Spooner & Mayberry (2020), arXiv:2003.01820
 """
 
-from typing import Dict, List, Tuple
-
 import numpy as np
 
 
@@ -30,9 +28,7 @@ class AdversarialMarketMaker:
         self.inventory = 0.0
         self.pnl = 0.0
 
-    def quote(
-        self, mid_price: float, volatility: float, inventory: float
-    ) -> Tuple[float, float]:
+    def quote(self, mid_price: float, volatility: float, inventory: float) -> tuple[float, float]:
         """
         Args:
             mid_price: Current mid-price.
@@ -52,7 +48,7 @@ class AdversarialMarketMaker:
         ask = mid_price + half_spread - skew
         return round(bid, 8), round(ask, 8)
 
-    def on_fill(self, side: str, price: float, qty: float, mid: float) -> Dict[str, float]:
+    def on_fill(self, side: str, price: float, qty: float, mid: float) -> dict[str, float]:
         """Update inventory and realized PnL on fill."""
         if side == "buy":
             self.inventory += qty
@@ -68,8 +64,8 @@ class AdversarialMarketMaker:
         }
 
     def adversarial_stress_test(
-        self, paths: List[np.ndarray], adversary_intensity: float = 0.3
-    ) -> Dict[str, float]:
+        self, paths: list[np.ndarray], adversary_intensity: float = 0.3
+    ) -> dict[str, float]:
         """
         Simulate worst-case adverse selection.
 

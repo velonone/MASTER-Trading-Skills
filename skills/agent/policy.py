@@ -7,7 +7,6 @@ Defines what an LLM agent is allowed to do and how much it can spend.
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Dict, Optional, Set
 
 
 class AgentPolicy:
@@ -24,10 +23,10 @@ class AgentPolicy:
 
     def __init__(
         self,
-        capabilities: Optional[Set[str]] = None,
-        daily_budget: Optional[Decimal] = None,
-        blocked_skills: Optional[Set[str]] = None,
-        skill_budgets: Optional[Dict[str, Decimal]] = None,
+        capabilities: set[str] | None = None,
+        daily_budget: Decimal | None = None,
+        blocked_skills: set[str] | None = None,
+        skill_budgets: dict[str, Decimal] | None = None,
     ):
         self.capabilities = capabilities or {"read"}
         self.daily_budget = daily_budget
@@ -35,9 +34,9 @@ class AgentPolicy:
         self.skill_budgets = skill_budgets or {}
 
         self._daily_spent: Decimal = Decimal("0")
-        self._skill_spent: Dict[str, Decimal] = {}
+        self._skill_spent: dict[str, Decimal] = {}
 
-    def can_invoke(self, skill_name: str, capability: str) -> tuple[bool, Optional[str]]:
+    def can_invoke(self, skill_name: str, capability: str) -> tuple[bool, str | None]:
         """
         Check whether *skill_name* can be invoked under *capability*.
         Returns (allowed, reason_or_none).
@@ -50,7 +49,9 @@ class AgentPolicy:
 
         return True, None
 
-    def check_budget(self, skill_name: str, notional: Decimal = Decimal("0")) -> tuple[bool, Optional[str]]:
+    def check_budget(
+        self, skill_name: str, notional: Decimal = Decimal("0")
+    ) -> tuple[bool, str | None]:
         """
         Check if spending *notional* would exceed budget.
         Returns (allowed, reason_or_none).
@@ -77,17 +78,17 @@ class AgentPolicy:
         self._skill_spent[skill_name] = self._skill_spent.get(skill_name, Decimal("0")) + notional
 
     @classmethod
-    def read_only(cls) -> "AgentPolicy":
+    def read_only(cls) -> AgentPolicy:
         """Convenience factory for a read-only agent."""
         return cls(capabilities={"read"})
 
     @classmethod
-    def signal_only(cls) -> "AgentPolicy":
+    def signal_only(cls) -> AgentPolicy:
         """Convenience factory for signal generation only."""
         return cls(capabilities={"read", "signal"})
 
     @classmethod
-    def full_trading(cls, daily_budget: Decimal = Decimal("1000")) -> "AgentPolicy":
+    def full_trading(cls, daily_budget: Decimal = Decimal("1000")) -> AgentPolicy:
         """Convenience factory for a trading agent with budget cap."""
         return cls(
             capabilities={"read", "signal", "trade"},

@@ -8,10 +8,8 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, Field
-
 
 try:
     import yaml
@@ -23,24 +21,26 @@ except ImportError:  # pragma: no cover
 
 class SkillEntry(BaseModel):
     """Individual skill within a SkillPack."""
+
     name: str
     class_name: str = Field(alias="class")
     module: str
     description: str = ""
-    triggers: List[str] = Field(default_factory=list)
+    triggers: list[str] = Field(default_factory=list)
 
 
 class SkillPackMetadata(BaseModel):
     """Top-level metadata from a SKILL.md frontmatter block."""
+
     name: str
     version: str = "1.0.0"
     description: str = ""
-    author: Optional[str] = None
-    skills: List[SkillEntry] = Field(default_factory=list)
-    dependencies: List[str] = Field(default_factory=list)
+    author: str | None = None
+    skills: list[SkillEntry] = Field(default_factory=list)
+    dependencies: list[str] = Field(default_factory=list)
 
 
-def parse_skill_md(path: Path) -> Tuple[Optional[SkillPackMetadata], str]:
+def parse_skill_md(path: Path) -> tuple[SkillPackMetadata | None, str]:
     """
     Parse a SKILL.md file.
 
@@ -63,14 +63,14 @@ def parse_skill_md(path: Path) -> Tuple[Optional[SkillPackMetadata], str]:
     return metadata, body
 
 
-def discover_skillpacks(root: Path) -> Dict[str, Tuple[SkillPackMetadata, str]]:
+def discover_skillpacks(root: Path) -> dict[str, tuple[SkillPackMetadata, str]]:
     """
     Recursively discover all SKILL.md files under *root*.
 
     Returns:
         Mapping of pack name -> (metadata, body).
     """
-    packs: Dict[str, Tuple[SkillPackMetadata, str]] = {}
+    packs: dict[str, tuple[SkillPackMetadata, str]] = {}
     for skill_md in root.rglob("SKILL.md"):
         try:
             meta, body = parse_skill_md(skill_md)

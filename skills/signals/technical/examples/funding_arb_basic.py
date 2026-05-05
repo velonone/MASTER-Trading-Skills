@@ -3,7 +3,9 @@ Example: Funding Arbitrage Signal
 ==================================
 Run: python -m skills.signals.technical.examples.funding_arb_basic
 """
+
 from decimal import Decimal
+
 from skills.signals.technical.funding_arb import FundingArbitrageSignal
 
 

@@ -8,7 +8,6 @@ Reference: Thorp (2006), "The Kelly Criterion in Blackjack, Sports Betting, and 
 """
 
 from decimal import Decimal
-from typing import Optional
 
 
 class KellyPositionSizer:
@@ -33,7 +32,7 @@ class KellyPositionSizer:
         win_rate: float,
         win_loss_ratio: float,
         current_drawdown: float = 0.0,
-    ) -> Optional[Decimal]:
+    ) -> Decimal | None:
         """
         Args:
             win_rate: Probability of winning [0,1].
@@ -89,11 +88,13 @@ class KellyPositionSizer:
 
             if adjusted > 0:
                 running_risk += adjusted
-                results.append({
-                    "symbol": opp["symbol"],
-                    "position_size_pct": round(adjusted, 4),
-                    "notional": round(float(portfolio_value) * adjusted, 2),
-                    "kelly_fraction": float(size_frac),
-                })
+                results.append(
+                    {
+                        "symbol": opp["symbol"],
+                        "position_size_pct": round(adjusted, 4),
+                        "notional": round(float(portfolio_value) * adjusted, 2),
+                        "kelly_fraction": float(size_frac),
+                    }
+                )
 
         return results

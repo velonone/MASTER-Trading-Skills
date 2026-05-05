@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import importlib
 import pkgutil
-from typing import Any, Dict, List, Optional, Type
+from typing import Any
 
 from skills.core.base import BaseSkill
 
@@ -22,8 +22,8 @@ class SkillRegistry:
     """Central registry for all MASTER Trading skills."""
 
     def __init__(self) -> None:
-        self._skills: Dict[str, BaseSkill] = {}
-        self._metadata: Dict[str, Dict[str, Any]] = {}
+        self._skills: dict[str, BaseSkill] = {}
+        self._metadata: dict[str, dict[str, Any]] = {}
 
     def register(self, skill: BaseSkill, override: bool = False) -> None:
         """Manually register a skill instance."""
@@ -38,17 +38,17 @@ class SkillRegistry:
             "class": skill.__class__.__name__,
         }
 
-    def register_class(self, cls: Type[BaseSkill], *args: Any, **kwargs: Any) -> None:
+    def register_class(self, cls: type[BaseSkill], *args: Any, **kwargs: Any) -> None:
         """Instantiate and register a skill class."""
         instance = cls(*args, **kwargs)
         self.register(instance)
 
-    def auto_discover(self, package_name: str = "skills") -> List[str]:
+    def auto_discover(self, package_name: str = "skills") -> list[str]:
         """
         Auto-discover skills by scanning sub-packages for classes
         inheriting from BaseSkill.
         """
-        discovered: List[str] = []
+        discovered: list[str] = []
         try:
             package = importlib.import_module(package_name)
         except ImportError:
@@ -76,15 +76,15 @@ class SkillRegistry:
                 continue
         return discovered
 
-    def get(self, name: str) -> Optional[BaseSkill]:
+    def get(self, name: str) -> BaseSkill | None:
         """Retrieve a skill by name (case-insensitive)."""
         return self._skills.get(name.lower())
 
-    def list_skills(self) -> Dict[str, Dict[str, Any]]:
+    def list_skills(self) -> dict[str, dict[str, Any]]:
         """Return metadata for all registered skills."""
         return dict(self._metadata)
 
-    def load(self, skill_id: str, config: Optional[Dict[str, Any]] = None) -> Optional[BaseSkill]:
+    def load(self, skill_id: str, config: dict[str, Any] | None = None) -> BaseSkill | None:
         """Discover and instantiate a skill by name with optional configuration."""
         key = skill_id.lower()
         if key in self._skills:
@@ -133,14 +133,14 @@ class SkillRegistry:
         if skill is not None:
             await skill.stop()
 
-    def health(self, name: str) -> Dict[str, Any]:
+    def health(self, name: str) -> dict[str, Any]:
         """Return health status for a loaded skill."""
         skill = self.get(name)
         if skill is not None:
             return skill.health()
         return {"status": "unknown", "skill": name}
 
-    async def dispatch(self, name: str, context: Dict[str, Any]) -> Any:
+    async def dispatch(self, name: str, context: dict[str, Any]) -> Any:
         """Execute a skill by name with the provided context."""
         skill = self.get(name)
         if skill is None:

@@ -9,14 +9,13 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from skills.agent.policy import AgentPolicy
 from skills.agent.schema import SkillSchemaGenerator
 from skills.core.base import BaseConnector, BaseRiskManager, BaseSkill, BaseStrategy
 from skills.core.logging import get_logger
 from skills.core.registry import SkillRegistry
-
 
 _audit_logger = get_logger("agent.audit")
 
@@ -32,14 +31,14 @@ def _capability_for(skill: BaseSkill) -> str:
     return "read"
 
 
-def _extract_notional(arguments: Dict[str, Any]) -> Decimal:
+def _extract_notional(arguments: dict[str, Any]) -> Decimal:
     """
     Best-effort notional extraction from tool arguments. Supports flat args
     and nested {"context": {...}} envelopes used by single-param run() skills.
     """
     if not isinstance(arguments, dict):
         return Decimal("0")
-    payload: Dict[str, Any] = arguments
+    payload: dict[str, Any] = arguments
     if set(arguments.keys()) == {"context"} and isinstance(arguments["context"], dict):
         payload = arguments["context"]
 
@@ -71,25 +70,27 @@ class AgentToolAdapter:
     audit log and emitted via :mod:`skills.core.logging`.
     """
 
-    def __init__(self, registry: SkillRegistry, policy: Optional[AgentPolicy] = None):
+    def __init__(self, registry: SkillRegistry, policy: AgentPolicy | None = None):
         self.registry = registry
         self.policy = policy
-        self.audit_log: List[Dict[str, Any]] = []
-        self._schemas: List[Dict[str, Any]] = []
+        self.audit_log: list[dict[str, Any]] = []
+        self._schemas: list[dict[str, Any]] = []
         self._build_schemas()
 
     def _build_schemas(self) -> None:
         """Auto-generate schemas for all registered skills."""
         for name, skill in self.registry._skills.items():
             schema = SkillSchemaGenerator.from_callable(skill.run, name=name)
-            schema["function"]["description"] = skill.description or schema["function"]["description"]
+            schema["function"]["description"] = (
+                skill.description or schema["function"]["description"]
+            )
             self._schemas.append(schema)
 
-    def export_openai_tools(self) -> List[Dict[str, Any]]:
+    def export_openai_tools(self) -> list[dict[str, Any]]:
         """Return tool definitions for OpenAI Chat Completions API."""
         return self._schemas
 
-    def export_anthropic_tools(self) -> List[Dict[str, Any]]:
+    def export_anthropic_tools(self) -> list[dict[str, Any]]:
         """Return tool definitions for Anthropic Messages API."""
         return [
             {
@@ -100,7 +101,7 @@ class AgentToolAdapter:
             for s in self._schemas
         ]
 
-    def _validate_arguments(self, tool_name: str, arguments: Dict[str, Any]) -> Optional[str]:
+    def _validate_arguments(self, tool_name: str, arguments: dict[str, Any]) -> str | None:
         """Pre-validate LLM arguments against the tool's JSONSchema."""
         schema = next((s for s in self._schemas if s["function"]["name"] == tool_name), None)
         if schema is None:
@@ -134,7 +135,7 @@ class AgentToolAdapter:
 
         return None
 
-    def _record_audit(self, entry: Dict[str, Any]) -> None:
+    def _record_audit(self, entry: dict[str, Any]) -> None:
         """Append an audit entry and emit via the structured logger."""
         self.audit_log.append(entry)
         try:
@@ -142,7 +143,7 @@ class AgentToolAdapter:
         except Exception:
             pass
 
-    async def dispatch(self, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    async def dispatch(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         """
         Execute a tool call from an LLM with policy gate, pre-validation,
         and structured errors.
@@ -163,9 +164,13 @@ class AgentToolAdapter:
                 "message": f"Skill '{tool_name}' not found.",
                 "available": list(self.registry.list_skills().keys()),
             }
-            self._record_audit({
-                "ts": ts, "tool": tool_name, "outcome": "skill_not_found",
-            })
+            self._record_audit(
+                {
+                    "ts": ts,
+                    "tool": tool_name,
+                    "outcome": "skill_not_found",
+                }
+            )
             return response
 
         capability = _capability_for(skill)
@@ -174,10 +179,15 @@ class AgentToolAdapter:
         if self.policy is not None:
             allowed, reason = self.policy.can_invoke(tool_name, capability)
             if not allowed:
-                self._record_audit({
-                    "ts": ts, "tool": tool_name, "capability": capability,
-                    "outcome": "policy_denied", "reason": reason,
-                })
+                self._record_audit(
+                    {
+                        "ts": ts,
+                        "tool": tool_name,
+                        "capability": capability,
+                        "outcome": "policy_denied",
+                        "reason": reason,
+                    }
+                )
                 return {
                     "status": "error",
                     "code": "POLICY_DENIED",
@@ -188,11 +198,16 @@ class AgentToolAdapter:
 
             budget_ok, budget_reason = self.policy.check_budget(tool_name, notional)
             if not budget_ok:
-                self._record_audit({
-                    "ts": ts, "tool": tool_name, "capability": capability,
-                    "notional": str(notional), "outcome": "budget_exceeded",
-                    "reason": budget_reason,
-                })
+                self._record_audit(
+                    {
+                        "ts": ts,
+                        "tool": tool_name,
+                        "capability": capability,
+                        "notional": str(notional),
+                        "outcome": "budget_exceeded",
+                        "reason": budget_reason,
+                    }
+                )
                 return {
                     "status": "error",
                     "code": "BUDGET_EXCEEDED",
@@ -203,10 +218,14 @@ class AgentToolAdapter:
 
         validation_error = self._validate_arguments(tool_name, arguments)
         if validation_error:
-            self._record_audit({
-                "ts": ts, "tool": tool_name, "outcome": "validation_error",
-                "reason": validation_error,
-            })
+            self._record_audit(
+                {
+                    "ts": ts,
+                    "tool": tool_name,
+                    "outcome": "validation_error",
+                    "reason": validation_error,
+                }
+            )
             return {
                 "status": "error",
                 "code": "VALIDATION_ERROR",
@@ -223,16 +242,26 @@ class AgentToolAdapter:
             result = await skill.run(run_args)
             if self.policy is not None and notional > 0 and capability == "trade":
                 self.policy.record_spend(tool_name, notional)
-            self._record_audit({
-                "ts": ts, "tool": tool_name, "capability": capability,
-                "notional": str(notional), "outcome": "success",
-            })
+            self._record_audit(
+                {
+                    "ts": ts,
+                    "tool": tool_name,
+                    "capability": capability,
+                    "notional": str(notional),
+                    "outcome": "success",
+                }
+            )
             return self._format_result(result)
         except Exception as exc:
-            self._record_audit({
-                "ts": ts, "tool": tool_name, "capability": capability,
-                "outcome": "execution_error", "reason": str(exc),
-            })
+            self._record_audit(
+                {
+                    "ts": ts,
+                    "tool": tool_name,
+                    "capability": capability,
+                    "outcome": "execution_error",
+                    "reason": str(exc),
+                }
+            )
             return {
                 "status": "error",
                 "code": "EXECUTION_ERROR",
@@ -240,18 +269,20 @@ class AgentToolAdapter:
                 "skill": tool_name,
             }
 
-    def _format_result(self, result: Any) -> Dict[str, Any]:
+    def _format_result(self, result: Any) -> dict[str, Any]:
         """Truncate and format results for LLM consumption."""
         payload = {"status": "success", "result": result}
         json_str = json.dumps(payload, default=str)
         if len(json_str) > 16000:
-            truncated = json.dumps({
-                "status": "success",
-                "result": str(result)[:8000] + "... [truncated]",
-            })
+            truncated = json.dumps(
+                {
+                    "status": "success",
+                    "result": str(result)[:8000] + "... [truncated]",
+                }
+            )
             return json.loads(truncated)
         return json.loads(json_str)
 
-    def list_tools(self) -> List[str]:
+    def list_tools(self) -> list[str]:
         """Return human-readable tool list."""
         return [s["function"]["name"] for s in self._schemas]

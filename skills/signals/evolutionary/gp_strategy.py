@@ -7,7 +7,7 @@ return (Sharpe ratio). Uses DEAP framework.
 Reference: Koza (1992); Chen & Navet (2007)
 """
 
-from typing import Callable, List
+from collections.abc import Callable
 
 import numpy as np
 
@@ -27,7 +27,7 @@ class GeneticProgrammingAlpha:
     def evolve(
         self,
         data: np.ndarray,
-        feature_names: List[str],
+        feature_names: list[str],
         fitness_fn: Callable | None = None,
     ) -> dict:
         """
@@ -40,7 +40,7 @@ class GeneticProgrammingAlpha:
             Dict with best_individual, sharpe, and expression string.
         """
         try:
-            from deap import base, creator, tools, algorithms, gp
+            from deap import algorithms, base, creator, gp, tools
         except ImportError as exc:
             raise ImportError("Install DEAP: pip install deap") from exc
 
@@ -91,8 +91,14 @@ class GeneticProgrammingAlpha:
         stats.register("max", np.max)
 
         algorithms.eaSimple(
-            pop, toolbox, cxpb=0.5, mutpb=0.2, ngen=self.generations,
-            stats=stats, halloffame=hof, verbose=False,
+            pop,
+            toolbox,
+            cxpb=0.5,
+            mutpb=0.2,
+            ngen=self.generations,
+            stats=stats,
+            halloffame=hof,
+            verbose=False,
         )
 
         best = hof[0]

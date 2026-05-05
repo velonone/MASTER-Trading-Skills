@@ -3,6 +3,7 @@ Example: FOMO / Panic Detection
 ================================
 Run: python -m skills.adversarial.examples.fomo_detect
 """
+
 from skills.adversarial.sentiment import FOMODetector
 
 

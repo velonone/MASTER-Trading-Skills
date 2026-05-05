@@ -14,12 +14,10 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import Dict, List, Optional
 
 from skills.core.base import BaseRiskManager
 from skills.core.logging import get_logger
 from skills.core.types import ExecutionReport, Order, Position, RiskLimit, Signal, SignalAction
-
 
 _logger = get_logger("execution.risk")
 
@@ -31,7 +29,7 @@ class DynamicRiskManager(BaseRiskManager):
     description = "Real-time risk interception: drawdown, size, correlation, velocity"
     version = "2.0.0"
 
-    def __init__(self, limits: Optional[RiskLimit] = None):
+    def __init__(self, limits: RiskLimit | None = None):
         self.limits = limits or RiskLimit(
             max_position_size=Decimal("1.0"),
             max_drawdown_pct=0.15,
@@ -39,24 +37,30 @@ class DynamicRiskManager(BaseRiskManager):
             daily_loss_limit=Decimal("1000"),
             max_orders_per_minute=60,
         )
-        self._order_times: List[datetime] = []
+        self._order_times: list[datetime] = []
         self._daily_pnl: Decimal = Decimal("0")
         self._last_reset: datetime = datetime.utcnow()
 
-    async def evaluate_signal(self, signal: Signal, position: Optional[Position]) -> Signal:
+    async def evaluate_signal(self, signal: Signal, position: Position | None) -> Signal:
         """Downgrade or block signals that violate risk constraints."""
         if self._drawdown_exceeded():
             _logger.warning("risk.signal_blocked reason=drawdown symbol=%s", signal.symbol)
             return self._block(signal, "DRAWDOWN_CIRCUIT_BREAKER")
 
         if position and position.leverage > self.limits.max_leverage:
-            _logger.warning("risk.signal_blocked reason=leverage symbol=%s leverage=%s",
-                            signal.symbol, position.leverage)
+            _logger.warning(
+                "risk.signal_blocked reason=leverage symbol=%s leverage=%s",
+                signal.symbol,
+                position.leverage,
+            )
             return self._block(signal, "LEVERAGE_CAP_EXCEEDED")
 
         if signal.confidence < 0.55:
-            _logger.info("risk.signal_suppressed reason=low_confidence symbol=%s confidence=%.2f",
-                         signal.symbol, signal.confidence)
+            _logger.info(
+                "risk.signal_suppressed reason=low_confidence symbol=%s confidence=%.2f",
+                signal.symbol,
+                signal.confidence,
+            )
             return Signal(
                 action=SignalAction.HOLD,
                 confidence=0.0,
@@ -67,7 +71,7 @@ class DynamicRiskManager(BaseRiskManager):
 
         return signal
 
-    async def evaluate_order(self, order: Order, limits: Optional[RiskLimit] = None) -> Optional[Order]:
+    async def evaluate_order(self, order: Order, limits: RiskLimit | None = None) -> Order | None:
         """Return order, modified order, or None if rejected."""
         lim = limits or self.limits
 
@@ -83,7 +87,9 @@ class DynamicRiskManager(BaseRiskManager):
         if order.quantity > lim.max_position_size:
             _logger.info(
                 "risk.order_capped symbol=%s requested=%s capped_to=%s",
-                order.symbol, order.quantity, lim.max_position_size,
+                order.symbol,
+                order.quantity,
+                lim.max_position_size,
             )
             order.quantity = lim.max_position_size
             order.metadata["risk_adjusted"] = "quantity_capped"
@@ -116,7 +122,7 @@ class DynamicRiskManager(BaseRiskManager):
             self._daily_pnl = Decimal("0")
             self._last_reset = datetime.utcnow()
 
-    def health(self) -> Dict[str, any]:
+    def health(self) -> dict[str, any]:
         return {
             "status": "ok",
             "daily_pnl": float(self._daily_pnl),

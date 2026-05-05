@@ -10,26 +10,26 @@ Design Principles:
 - Every signal carries provenance (which skill, confidence, timestamp)
 """
 
-from skills.core.types import (
-    Signal,
-    SignalAction,
-    Position,
-    Order,
-    OrderType,
-    OrderSide,
-    Trade,
-    MarketData,
-    RiskLimit,
-    ExecutionReport,
-    PrimitiveAccuracy,
-)
 from skills.core.base import (
-    BaseStrategy,
-    BaseRiskManager,
     BaseConnector,
+    BaseRiskManager,
     BaseSkill,
+    BaseStrategy,
 )
 from skills.core.registry import SkillRegistry, registry
+from skills.core.types import (
+    ExecutionReport,
+    MarketData,
+    Order,
+    OrderSide,
+    OrderType,
+    Position,
+    PrimitiveAccuracy,
+    RiskLimit,
+    Signal,
+    SignalAction,
+    Trade,
+)
 
 __all__ = [
     # Types

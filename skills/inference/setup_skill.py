@@ -25,13 +25,13 @@ appropriate for production deployments.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from skills.core.base import BaseSkill
 from skills.inference.calibration import (
+    SETUP_PROMPT,
     Calibration,
     CalibrationSource,
-    SETUP_PROMPT,
 )
 
 
@@ -63,9 +63,10 @@ class CalibrationSetupSkill(BaseSkill):
     version = "1.0.0"
     triggers = ["calibration", "setup", "configure"]
 
-    async def run(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        action: str = (context.get("action")
-                       or ("set" if context.get("source") else "show")).lower()
+    async def run(self, context: dict[str, Any]) -> dict[str, Any]:
+        action: str = (
+            context.get("action") or ("set" if context.get("source") else "show")
+        ).lower()
 
         if action == "prompt":
             return {"status": "ok", "prompt": SETUP_PROMPT}
@@ -95,7 +96,7 @@ class CalibrationSetupSkill(BaseSkill):
                     "prompt": SETUP_PROMPT,
                 }
 
-            path: Optional[str] = context.get("path")
+            path: str | None = context.get("path")
 
             try:
                 config_path = Calibration.persist_choice(source, path=path)

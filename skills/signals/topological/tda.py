@@ -7,8 +7,6 @@ market crashes using TDA (Topological Data Analysis).
 Reference: Gidea & Katz (2018), arXiv:1703.04385
 """
 
-from typing import Optional
-
 import numpy as np
 
 
@@ -36,8 +34,8 @@ class TopologicalCrashDetector:
             Dict with crisis_score [0,1], persistence norm, and recommendation.
         """
         try:
-            from ripser import ripser
             from persim import PersistenceLandscapeExact
+            from ripser import ripser
         except ImportError as exc:
             raise ImportError("Install ripser and persim: pip install ripser persim") from exc
 
@@ -45,9 +43,13 @@ class TopologicalCrashDetector:
             return {"crisis_score": 0.0, "error": "Insufficient data length"}
 
         # Takens delay embedding
-        embedded = np.array([returns[i : i + self.window] for i in range(len(returns) - self.window)])
+        embedded = np.array(
+            [returns[i : i + self.window] for i in range(len(returns) - self.window)]
+        )
         step = max(1, embedded.shape[1] // self.delay)
-        point_cloud = np.column_stack([embedded[::step, j] for j in range(0, embedded.shape[1], step)])
+        point_cloud = np.column_stack(
+            [embedded[::step, j] for j in range(0, embedded.shape[1], step)]
+        )
 
         # Persistent homology
         diagrams = ripser(point_cloud, maxdim=self.maxdim)["dgms"]
@@ -66,5 +68,9 @@ class TopologicalCrashDetector:
             "crisis_score": round(float(crisis_score), 4),
             "persistence_l2_norm": round(float(l2_norm), 6),
             "window": self.window,
-            "recommendation": "DEFENSIVE" if crisis_score > 0.75 else "CAUTION" if crisis_score > 0.50 else "NORMAL",
+            "recommendation": (
+                "DEFENSIVE"
+                if crisis_score > 0.75
+                else "CAUTION" if crisis_score > 0.50 else "NORMAL"
+            ),
         }

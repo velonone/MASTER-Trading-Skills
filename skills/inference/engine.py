@@ -18,25 +18,23 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from skills.core.types import (
     CausalChain,
     CausalEffect,
     EffectOrder,
     EventCategory,
-    Signal,
     SignalAction,
 )
 from skills.inference.calibration import Calibration
-from skills.inference.primitives import InferencePrimitive, PrimitiveLibrary
-
+from skills.inference.primitives import PrimitiveLibrary
 
 _ORDER_KEYWORD_TO_ENUM = {
-    "immediate":   EffectOrder.IMMEDIATE,
-    "short_term":  EffectOrder.SHORT_TERM,
+    "immediate": EffectOrder.IMMEDIATE,
+    "short_term": EffectOrder.SHORT_TERM,
     "medium_term": EffectOrder.MEDIUM_TERM,
-    "long_term":   EffectOrder.LONG_TERM,
+    "long_term": EffectOrder.LONG_TERM,
 }
 
 
@@ -63,9 +61,9 @@ class HigherOrderInferenceEngine:
 
     def __init__(
         self,
-        library: Optional[PrimitiveLibrary] = None,
+        library: PrimitiveLibrary | None = None,
         *,
-        calibration: Optional[Calibration] = None,
+        calibration: Calibration | None = None,
         strict_calibration: bool = False,
     ) -> None:
         self.calibration = (
@@ -78,37 +76,37 @@ class HigherOrderInferenceEngine:
             if library is not None
             else PrimitiveLibrary.default_library(calibration=self.calibration)
         )
-        self.prediction_log: List[Dict[str, Any]] = []
-        self.upgrade_log: List[Dict[str, Any]] = []
+        self.prediction_log: list[dict[str, Any]] = []
+        self.upgrade_log: list[dict[str, Any]] = []
 
     # -------------------------------------------------------------------
     # Calibration accessors
     # -------------------------------------------------------------------
     @property
-    def _chains(self) -> Dict[str, List[Dict[str, Any]]]:
+    def _chains(self) -> dict[str, list[dict[str, Any]]]:
         return self.calibration.data.get("causal_chains", {})
 
     @property
-    def _singularity(self) -> Dict[str, Any]:
+    def _singularity(self) -> dict[str, Any]:
         return self.calibration.data.get("singularity_weights", {})
 
     @property
-    def _signal_thresholds(self) -> Dict[str, float]:
+    def _signal_thresholds(self) -> dict[str, float]:
         return self.calibration.data.get("signal_thresholds", {})
 
     @property
-    def _convergence(self) -> Dict[str, float]:
+    def _convergence(self) -> dict[str, float]:
         return self.calibration.data.get("convergence_ratios", {})
 
     # -------------------------------------------------------------------
     # Layer 1: Singularity Detection
     # -------------------------------------------------------------------
 
-    def detect_singularity(self, event: Dict[str, Any]) -> Dict[str, Any]:
+    def detect_singularity(self, event: dict[str, Any]) -> dict[str, Any]:
         """Determine whether an event has system-altering potential."""
         weights = self._singularity
         score = 0.0
-        reasons: List[str] = []
+        reasons: list[str] = []
 
         if event.get("affects_core_assets"):
             score += weights.get("affects_core_assets", 0.0)
@@ -139,9 +137,7 @@ class HigherOrderInferenceEngine:
     # Layer 2: Causal Chain Construction
     # -------------------------------------------------------------------
 
-    def build_causal_chain(
-        self, event_description: str, category: EventCategory
-    ) -> CausalChain:
+    def build_causal_chain(self, event_description: str, category: EventCategory) -> CausalChain:
         """Construct a forward-simulation causal chain from event to equilibrium."""
         effects = self._route_event(event_description, category)
         convergence = self._compute_convergence(effects)
@@ -156,7 +152,7 @@ class HigherOrderInferenceEngine:
             overall_confidence=overall_conf,
         )
 
-    def _route_event(self, event: str, category: EventCategory) -> List[CausalEffect]:
+    def _route_event(self, event: str, category: EventCategory) -> list[CausalEffect]:
         event_lower = event.lower()
         if category == EventCategory.WHALE_MOVEMENT:
             return self._whale_chain(event_lower)
@@ -170,31 +166,34 @@ class HigherOrderInferenceEngine:
             return self._chain_from_calibration("liquidation.cascade")
         return self._chain_from_calibration("generic.unknown")
 
-    def _whale_chain(self, event: str) -> List[CausalEffect]:
+    def _whale_chain(self, event: str) -> list[CausalEffect]:
         if "deposit" in event and "exchange" in event:
             return self._chain_from_calibration("whale.exchange_deposit")
         if "accumulation" in event or "accumulating" in event:
             return self._chain_from_calibration("whale.accumulation")
         return self._chain_from_calibration("generic.unknown")
 
-    def _chain_from_calibration(self, key: str) -> List[CausalEffect]:
+    def _chain_from_calibration(self, key: str) -> list[CausalEffect]:
         """Materialize a causal chain from the calibration JSON."""
         chain_data = self._chains.get(key) or self._chains.get("generic.unknown", [])
-        effects: List[CausalEffect] = []
+        effects: list[CausalEffect] = []
         for step in chain_data:
-            order_enum = _ORDER_KEYWORD_TO_ENUM.get(step.get("order", "immediate"),
-                                                    EffectOrder.IMMEDIATE)
-            effects.append(CausalEffect(
-                description=step.get("description", ""),
-                order=order_enum,
-                confidence=float(step.get("confidence", 0.5)),
-                affected_assets=list(step.get("affected_assets", [])),
-                direction=step.get("direction", "neutral"),
-                magnitude=step.get("magnitude", "small"),
-            ))
+            order_enum = _ORDER_KEYWORD_TO_ENUM.get(
+                step.get("order", "immediate"), EffectOrder.IMMEDIATE
+            )
+            effects.append(
+                CausalEffect(
+                    description=step.get("description", ""),
+                    order=order_enum,
+                    confidence=float(step.get("confidence", 0.5)),
+                    affected_assets=list(step.get("affected_assets", [])),
+                    direction=step.get("direction", "neutral"),
+                    magnitude=step.get("magnitude", "small"),
+                )
+            )
         return effects
 
-    def _compute_convergence(self, effects: List[CausalEffect]) -> str:
+    def _compute_convergence(self, effects: list[CausalEffect]) -> str:
         if not effects:
             return "insufficient_data"
         bullish = sum(e.confidence for e in effects if e.direction == "bullish")
@@ -207,7 +206,7 @@ class HigherOrderInferenceEngine:
             return "bearish_convergence"
         return "range_bound_uncertain"
 
-    def _chain_confidence(self, effects: List[CausalEffect]) -> float:
+    def _chain_confidence(self, effects: list[CausalEffect]) -> float:
         if not effects:
             return 0.0
         product = 1.0
@@ -221,35 +220,37 @@ class HigherOrderInferenceEngine:
     # Layer 3: Backward Induction & Counterfactuals
     # -------------------------------------------------------------------
 
-    def backward_induction(
-        self, desired_outcome: str, constraints: List[str]
-    ) -> List[str]:
+    def backward_induction(self, desired_outcome: str, constraints: list[str]) -> list[str]:
         """Game-theoretic backward induction from a desired outcome."""
-        steps: List[str] = []
+        steps: list[str] = []
         outcome_lower = desired_outcome.lower()
 
         if "profit" in outcome_lower:
-            steps.extend([
-                "Exit position at target price or trailing stop",
-                "Set take-profit and stop-loss orders",
-                "Monitor for adverse divergence signals",
-                "Enter position at optimal limit price",
-                "Confirm entry signal with multi-timeframe confluence",
-                "Analyze market regime and liquidity conditions",
-            ])
+            steps.extend(
+                [
+                    "Exit position at target price or trailing stop",
+                    "Set take-profit and stop-loss orders",
+                    "Monitor for adverse divergence signals",
+                    "Enter position at optimal limit price",
+                    "Confirm entry signal with multi-timeframe confluence",
+                    "Analyze market regime and liquidity conditions",
+                ]
+            )
         elif "hedge" in outcome_lower:
-            steps.extend([
-                "Unwind hedge as risk dissipates",
-                "Rebalance hedge ratio dynamically",
-                "Enter correlated inverse position",
-                "Identify exposure concentration risk",
-            ])
+            steps.extend(
+                [
+                    "Unwind hedge as risk dissipates",
+                    "Rebalance hedge ratio dynamically",
+                    "Enter correlated inverse position",
+                    "Identify exposure concentration risk",
+                ]
+            )
         else:
             steps.append("Decompose desired outcome into atomic actions")
 
         return list(reversed(steps))
 
-    def counterfactual_analysis(self, event: str, observed_effect: str) -> Dict[str, Any]:
+    def counterfactual_analysis(self, event: str, observed_effect: str) -> dict[str, Any]:
         """Assess whether the event actually caused the observed effect."""
         alternatives = [
             "Market-wide macro movement (not event-specific)",
@@ -275,7 +276,7 @@ class HigherOrderInferenceEngine:
 
     def generate_prediction(
         self, event_description: str, category: EventCategory
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """End-to-end prediction pipeline; output includes calibration provenance."""
         singularity = self.detect_singularity({"affects_core_assets": True, "magnitude": "medium"})
         chain = self.build_causal_chain(event_description, category)
@@ -308,12 +309,14 @@ class HigherOrderInferenceEngine:
         if "bullish" in chain.convergence:
             return SignalAction.BUY if chain.overall_confidence > buy_above else SignalAction.HOLD
         if "bearish" in chain.convergence:
-            return SignalAction.SELL if chain.overall_confidence > sell_above else SignalAction.REDUCE
+            return (
+                SignalAction.SELL if chain.overall_confidence > sell_above else SignalAction.REDUCE
+            )
         return SignalAction.HOLD
 
-    def _match_primitives(self, event: str) -> List[str]:
+    def _match_primitives(self, event: str) -> list[str]:
         """Map event text to relevant primitives for traceability."""
-        matched: List[str] = []
+        matched: list[str] = []
         event_lower = event.lower()
         for name, primitive in self.library.primitives.items():
             if any(token in event_lower for token in primitive.tags):
@@ -324,20 +327,18 @@ class HigherOrderInferenceEngine:
     # Self-Upgrade Diagnostics
     # -------------------------------------------------------------------
 
-    def diagnostics(self) -> Dict[str, Any]:
+    def diagnostics(self) -> dict[str, Any]:
         return {
             "total_predictions": len(self.prediction_log),
             "primitives_count": len(self.library.primitives),
             "primitive_accuracy": self.library.accuracy_report(),
-            "underperformers": [
-                p.name for p in self.library.underperformers()
-            ],
+            "underperformers": [p.name for p in self.library.underperformers()],
             "upgrade_recommendations": self._generate_recommendations(),
             "calibration": self.calibration.emit_meta(),
         }
 
-    def _generate_recommendations(self) -> List[str]:
-        recs: List[str] = []
+    def _generate_recommendations(self) -> list[str]:
+        recs: list[str] = []
         for p in self.library.underperformers():
             recs.append(
                 f"REVIEW primitive '{p.name}': accuracy {p.accuracy:.2f} "
@@ -351,7 +352,7 @@ class HigherOrderInferenceEngine:
             recs.append(f"CALIBRATION: {warning}")
         return recs
 
-    def export_log(self, path: Optional[str] = None) -> str:
+    def export_log(self, path: str | None = None) -> str:
         """Serialize prediction log for offline analysis."""
         payload = {
             "engine": "HigherOrderInferenceEngine",

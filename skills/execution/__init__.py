@@ -10,7 +10,6 @@ Usage:
     from skills.execution.web3.dex_executor import Web3DEXExecutor       # explicit
 """
 
-from skills.execution.risk import DynamicRiskManager
 from skills.execution.oms import OrderManagementSystem
 from skills.execution.pipeline import (
     PipelineResult,
@@ -18,6 +17,7 @@ from skills.execution.pipeline import (
     TradingPipeline,
     fixed_qty_sizer,
 )
+from skills.execution.risk import DynamicRiskManager
 
 __all__ = [
     "DynamicRiskManager",

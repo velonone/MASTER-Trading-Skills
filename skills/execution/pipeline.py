@@ -30,9 +30,10 @@ single auditable call.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any
 
 from skills.core.base import BaseConnector, BaseRiskManager, BaseStrategy
 from skills.core.logging import get_logger
@@ -45,39 +46,42 @@ from skills.core.types import (
 )
 from skills.execution.oms import OrderManagementSystem
 
-
 _logger = get_logger("pipeline")
 
 
-SizerFn = Callable[[Signal, Optional[Position]], Decimal]
+SizerFn = Callable[[Signal, Position | None], Decimal]
 """Callable that returns the order quantity for a given signal/position."""
 
 
 @dataclass
 class PipelineStep:
     """One full pass through the pipeline. Useful for tests and audits."""
+
     signal: Signal
-    risk_signal: Optional[Signal] = None
-    order: Optional[Order] = None
-    risked_order: Optional[Order] = None
-    report: Optional[ExecutionReport] = None
-    rejected_reason: Optional[str] = None
+    risk_signal: Signal | None = None
+    order: Order | None = None
+    risked_order: Order | None = None
+    report: ExecutionReport | None = None
+    rejected_reason: str | None = None
 
 
 @dataclass
 class PipelineResult:
     """Aggregated outcome of one ``process()`` invocation."""
-    steps: List[PipelineStep] = field(default_factory=list)
+
+    steps: list[PipelineStep] = field(default_factory=list)
 
     @property
-    def reports(self) -> List[ExecutionReport]:
+    def reports(self) -> list[ExecutionReport]:
         return [s.report for s in self.steps if s.report is not None]
 
 
 def fixed_qty_sizer(qty: Decimal) -> SizerFn:
     """Trivial sizer that always returns ``qty``."""
-    def _size(_signal: Signal, _position: Optional[Position]) -> Decimal:
+
+    def _size(_signal: Signal, _position: Position | None) -> Decimal:
         return qty
+
     return _size
 
 
@@ -107,8 +111,8 @@ class TradingPipeline:
 
     async def process(
         self,
-        context: Dict[str, Any],
-        position: Optional[Position] = None,
+        context: dict[str, Any],
+        position: Position | None = None,
     ) -> PipelineResult:
         """
         Run one strategy → risk → OMS → connector pass.
@@ -119,7 +123,7 @@ class TradingPipeline:
         pipeline will fall back to the OMS-tracked position.
         """
         result = PipelineResult()
-        signals: List[Signal] = list(self.strategy.generate_signals(context))
+        signals: list[Signal] = list(self.strategy.generate_signals(context))
 
         for signal in signals:
             step = PipelineStep(signal=signal)
@@ -135,8 +139,11 @@ class TradingPipeline:
 
             if risked_signal.action == SignalAction.HOLD:
                 step.rejected_reason = "RISK_BLOCKED_SIGNAL"
-                _logger.info("pipeline.signal_blocked symbol=%s reason=%s",
-                             signal.symbol, risked_signal.evidence)
+                _logger.info(
+                    "pipeline.signal_blocked symbol=%s reason=%s",
+                    signal.symbol,
+                    risked_signal.evidence,
+                )
                 continue
 
             qty = self.sizer(risked_signal, current_pos)
@@ -144,8 +151,7 @@ class TradingPipeline:
                 step.rejected_reason = "SIZER_RETURNED_NON_POSITIVE"
                 continue
 
-            order = self.oms.signal_to_order(risked_signal, qty=qty,
-                                             order_type=self.order_type)
+            order = self.oms.signal_to_order(risked_signal, qty=qty, order_type=self.order_type)
             step.order = order
             await self.oms.submit(order)
 
@@ -154,8 +160,7 @@ class TradingPipeline:
 
             if risked_order is None:
                 step.rejected_reason = "RISK_BLOCKED_ORDER"
-                _logger.info("pipeline.order_blocked symbol=%s",
-                             order.symbol)
+                _logger.info("pipeline.order_blocked symbol=%s", order.symbol)
                 continue
 
             report = await self.connector.place_order(risked_order)

@@ -12,12 +12,29 @@ from skills.core.types import Signal, SignalAction
 
 class MockStrategy:
     """Simple momentum strategy for testing."""
+
     def generate_signals(self, bar: dict) -> list:
         # Buy if close > open, sell if close < open
         if bar["close"] > bar["open"]:
-            return [Signal(action=SignalAction.BUY, confidence=0.8, strength=0.5, symbol="BTC/USDT", source="mock")]
+            return [
+                Signal(
+                    action=SignalAction.BUY,
+                    confidence=0.8,
+                    strength=0.5,
+                    symbol="BTC/USDT",
+                    source="mock",
+                )
+            ]
         elif bar["close"] < bar["open"]:
-            return [Signal(action=SignalAction.SELL, confidence=0.8, strength=0.5, symbol="BTC/USDT", source="mock")]
+            return [
+                Signal(
+                    action=SignalAction.SELL,
+                    confidence=0.8,
+                    strength=0.5,
+                    symbol="BTC/USDT",
+                    source="mock",
+                )
+            ]
         return []
 
 
@@ -32,13 +49,16 @@ def sample_data():
     highs = np.maximum(opens, closes) + np.abs(np.random.randn(n)) * 30
     lows = np.minimum(opens, closes) - np.abs(np.random.randn(n)) * 30
     volumes = np.abs(np.random.randn(n)) * 100 + 50
-    return pd.DataFrame({
-        "open": opens,
-        "high": highs,
-        "low": lows,
-        "close": closes,
-        "volume": volumes,
-    }, index=dates)
+    return pd.DataFrame(
+        {
+            "open": opens,
+            "high": highs,
+            "low": lows,
+            "close": closes,
+            "volume": volumes,
+        },
+        index=dates,
+    )
 
 
 def test_backtest_runs(sample_data):
@@ -54,17 +74,27 @@ def test_backtest_runs(sample_data):
 
 def test_backtest_equity_monotonic_with_simple_strategy():
     # Rising market: always buy
-    df = pd.DataFrame({
-        "open": [100, 101, 102, 103, 104],
-        "high": [101, 102, 103, 104, 105],
-        "low": [99, 100, 101, 102, 103],
-        "close": [101, 102, 103, 104, 105],
-        "volume": [100, 100, 100, 100, 100],
-    })
+    df = pd.DataFrame(
+        {
+            "open": [100, 101, 102, 103, 104],
+            "high": [101, 102, 103, 104, 105],
+            "low": [99, 100, 101, 102, 103],
+            "close": [101, 102, 103, 104, 105],
+            "volume": [100, 100, 100, 100, 100],
+        }
+    )
 
     class AlwaysBuy:
         def generate_signals(self, bar):
-            return [Signal(action=SignalAction.BUY, confidence=1.0, strength=1.0, symbol="TEST", source="test")]
+            return [
+                Signal(
+                    action=SignalAction.BUY,
+                    confidence=1.0,
+                    strength=1.0,
+                    symbol="TEST",
+                    source="test",
+                )
+            ]
 
     engine = BacktestEngine(data=df, strategy=AlwaysBuy(), initial_capital=10000)
     result = engine.run()
@@ -89,6 +119,7 @@ def test_volatility_slippage():
 
 def test_broker_limit_order_fill():
     from backtest.broker import BrokerSimulator
+
     broker = BrokerSimulator()
     bar = {"open": 100, "high": 105, "low": 95, "close": 102, "volume": 1000}
     fill = broker.simulate_limit_order(qty=1.0, limit_price=96, bar=bar, side="buy")
@@ -98,6 +129,7 @@ def test_broker_limit_order_fill():
 
 def test_broker_limit_order_no_fill():
     from backtest.broker import BrokerSimulator
+
     broker = BrokerSimulator()
     bar = {"open": 100, "high": 105, "low": 99, "close": 102, "volume": 1000}
     fill = broker.simulate_limit_order(qty=1.0, limit_price=95, bar=bar, side="buy")
@@ -107,6 +139,7 @@ def test_broker_limit_order_no_fill():
 def test_broker_limit_order_open_already_crossed():
     """Buy limit above open — fills at open (no lookahead needed)."""
     from backtest.broker import BrokerSimulator
+
     broker = BrokerSimulator()
     bar = {"open": 94, "high": 105, "low": 90, "close": 102, "volume": 1000}
     fill = broker.simulate_limit_order(qty=1.0, limit_price=95, bar=bar, side="buy")
@@ -117,6 +150,7 @@ def test_broker_limit_order_open_already_crossed():
 def test_broker_limit_order_range_crossed_later():
     """Open above limit, but low touches limit — fills at limit price."""
     from backtest.broker import BrokerSimulator
+
     broker = BrokerSimulator()
     bar = {"open": 100, "high": 105, "low": 95, "close": 102, "volume": 1000}
     fill = broker.simulate_limit_order(qty=1.0, limit_price=95, bar=bar, side="buy")
@@ -127,6 +161,7 @@ def test_broker_limit_order_range_crossed_later():
 def test_broker_limit_order_sell_open_crossed():
     """Sell limit below open — fills at open."""
     from backtest.broker import BrokerSimulator
+
     broker = BrokerSimulator()
     bar = {"open": 106, "high": 110, "low": 100, "close": 102, "volume": 1000}
     fill = broker.simulate_limit_order(qty=1.0, limit_price=105, bar=bar, side="sell")
@@ -137,6 +172,7 @@ def test_broker_limit_order_sell_open_crossed():
 def test_broker_limit_order_sell_range_crossed():
     """Open below limit, but high touches limit — fills at limit price."""
     from backtest.broker import BrokerSimulator
+
     broker = BrokerSimulator()
     bar = {"open": 100, "high": 110, "low": 95, "close": 102, "volume": 1000}
     fill = broker.simulate_limit_order(qty=1.0, limit_price=105, bar=bar, side="sell")
@@ -154,26 +190,46 @@ def test_backtest_no_lookahead_oracle_strategy():
     # below the previous close, so a perfect-foresight strategy that
     # exploits same-bar fills would show >0 return; next-bar fills must
     # produce roughly zero or negative return (no oracle profit).
-    df = pd.DataFrame({
-        "open":   [100, 110, 100, 110, 100, 110, 100, 110, 100, 110],
-        "high":   [120, 110, 120, 110, 120, 110, 120, 110, 120, 110],
-        "low":    [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
-        "close":  [115, 100, 115, 100, 115, 100, 115, 100, 115, 100],
-        "volume": [100] * 10,
-    })
+    df = pd.DataFrame(
+        {
+            "open": [100, 110, 100, 110, 100, 110, 100, 110, 100, 110],
+            "high": [120, 110, 120, 110, 120, 110, 120, 110, 120, 110],
+            "low": [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+            "close": [115, 100, 115, 100, 115, 100, 115, 100, 115, 100],
+            "volume": [100] * 10,
+        }
+    )
 
     class OracleSameBar:
         """Buys whenever the bar's close exceeds open — pure lookahead."""
+
         def generate_signals(self, bar):
             if bar["close"] > bar["open"]:
-                return [Signal(action=SignalAction.BUY, confidence=1.0,
-                               strength=1.0, symbol="X", source="oracle")]
-            return [Signal(action=SignalAction.CLOSE, confidence=1.0,
-                           strength=1.0, symbol="X", source="oracle")]
+                return [
+                    Signal(
+                        action=SignalAction.BUY,
+                        confidence=1.0,
+                        strength=1.0,
+                        symbol="X",
+                        source="oracle",
+                    )
+                ]
+            return [
+                Signal(
+                    action=SignalAction.CLOSE,
+                    confidence=1.0,
+                    strength=1.0,
+                    symbol="X",
+                    source="oracle",
+                )
+            ]
 
     engine = BacktestEngine(
-        data=df, strategy=OracleSameBar(), initial_capital=10_000,
-        commission=0.0, slippage_model=_ZeroSlippage(),
+        data=df,
+        strategy=OracleSameBar(),
+        initial_capital=10_000,
+        commission=0.0,
+        slippage_model=_ZeroSlippage(),
     )
     result = engine.run()
     # If lookahead exists, the oracle would print money. With next-bar

@@ -9,17 +9,15 @@ or RPC dependencies.
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pytest
 
 from skills.core.base import BaseConnector, BaseStrategy
 from skills.core.types import (
     ExecutionReport,
-    MarketData,
     Order,
     OrderSide,
-    Position,
     Signal,
     SignalAction,
 )
@@ -34,31 +32,41 @@ from skills.execution import (
 class _AlwaysBuy(BaseStrategy):
     name = "always_buy"
 
-    def generate_signals(self, context: Dict[str, Any]) -> List[Signal]:
-        return [Signal(
-            action=SignalAction.BUY, confidence=0.9, strength=1.0,
-            symbol=context.get("symbol", "BTC/USDT"), source=self.name,
-        )]
+    def generate_signals(self, context: dict[str, Any]) -> list[Signal]:
+        return [
+            Signal(
+                action=SignalAction.BUY,
+                confidence=0.9,
+                strength=1.0,
+                symbol=context.get("symbol", "BTC/USDT"),
+                source=self.name,
+            )
+        ]
 
 
 class _AlwaysHold(BaseStrategy):
     name = "always_hold"
 
-    def generate_signals(self, context: Dict[str, Any]) -> List[Signal]:
-        return [Signal(
-            action=SignalAction.HOLD, confidence=0.0,
-            symbol=context.get("symbol", "BTC/USDT"), source=self.name,
-        )]
+    def generate_signals(self, context: dict[str, Any]) -> list[Signal]:
+        return [
+            Signal(
+                action=SignalAction.HOLD,
+                confidence=0.0,
+                symbol=context.get("symbol", "BTC/USDT"),
+                source=self.name,
+            )
+        ]
 
 
 class _MemoryConnector(BaseConnector):
     """Trivial in-memory connector that always reports a complete fill."""
+
     name = "memory_connector"
     venue = "test"
 
     def __init__(self, fill_price: Decimal = Decimal("100")):
         self.fill_price = fill_price
-        self.orders_received: List[Order] = []
+        self.orders_received: list[Order] = []
 
     async def fetch_ohlcv(self, symbol, timeframe="1h", limit=100):
         return []
@@ -74,8 +82,9 @@ class _MemoryConnector(BaseConnector):
 
     async def cancel_order(self, order_id, symbol):
         return ExecutionReport(
-            order=Order(symbol=symbol, side=OrderSide.SELL,
-                        order_type="MARKET", quantity=Decimal("0")),
+            order=Order(
+                symbol=symbol, side=OrderSide.SELL, order_type="MARKET", quantity=Decimal("0")
+            ),
             status="CANCELLED",
         )
 
@@ -139,8 +148,11 @@ async def test_pipeline_risk_blocks_low_confidence_signal():
         name = "low_conf_buy"
 
         def generate_signals(self, ctx):
-            return [Signal(action=SignalAction.BUY, confidence=0.30,
-                           symbol="BTC/USDT", source=self.name)]
+            return [
+                Signal(
+                    action=SignalAction.BUY, confidence=0.30, symbol="BTC/USDT", source=self.name
+                )
+            ]
 
     connector = _MemoryConnector()
     pipeline = TradingPipeline(

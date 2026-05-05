@@ -9,10 +9,6 @@ Integrates with Etherscan and CoinGecko APIs.
 
 from __future__ import annotations
 
-from datetime import datetime
-from decimal import Decimal
-from typing import Dict, List, Optional, Tuple
-
 from skills.core.base import BaseSkill
 from skills.core.types import Signal, SignalAction
 
@@ -34,7 +30,7 @@ class WhaleTracker(BaseSkill):
             token_symbol=context.get("token_symbol", "ETH"),
         )
 
-    def __init__(self, etherscan_api_key: Optional[str] = None):
+    def __init__(self, etherscan_api_key: str | None = None):
         self.etherscan_api_key = etherscan_api_key
         self.whale_thresholds = {
             "min_balance_eth": 1000.0,
@@ -101,7 +97,7 @@ class WhaleTracker(BaseSkill):
             evidence=evidence,
         )
 
-    async def _fetch_on_chain_data(self, address: str, lookback: int) -> Dict:
+    async def _fetch_on_chain_data(self, address: str, lookback: int) -> dict:
         """Placeholder for async Etherscan API integration."""
         # In production, use aiohttp + Etherscan API
         return {
@@ -111,7 +107,7 @@ class WhaleTracker(BaseSkill):
             "token_symbol": "ETH",
         }
 
-    def _classify(self, data: Dict) -> Tuple[str, float, List[str]]:
+    def _classify(self, data: dict) -> tuple[str, float, list[str]]:
         net_flow = data.get("net_flow_eth", 0.0)
         total_flow = data.get("total_flow_eth", 1.0)
         exchange_int = data.get("exchange_interactions", 0)
@@ -120,7 +116,7 @@ class WhaleTracker(BaseSkill):
             return "neutral", 0.3, ["Insufficient transaction volume"]
 
         ratio = net_flow / total_flow
-        evidence: List[str] = []
+        evidence: list[str] = []
         behavior = "neutral"
         confidence = 0.5
 

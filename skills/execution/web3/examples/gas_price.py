@@ -3,7 +3,9 @@ Example: EIP-1559 Gas Price Fetch
 ==================================
 Run: python -m skills.execution.web3.examples.gas_price
 """
+
 import asyncio
+
 from skills.execution.web3 import Web3DEXExecutor
 
 

@@ -11,15 +11,13 @@ Requires:
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from skills.core.base import BaseConnector
 from skills.core.logging import get_logger
 from skills.core.types import ExecutionReport, MarketData, Order, OrderType, Position
 from skills.execution.web3.mev_protection import MEVProtection
-
 
 _logger = get_logger("execution.web3")
 
@@ -38,8 +36,8 @@ class Web3DEXExecutor(BaseConnector):
     def __init__(
         self,
         rpc_url: str,
-        private_key: Optional[str] = None,
-        mev_protection: Optional[str] = "flashbots",
+        private_key: str | None = None,
+        mev_protection: str | None = "flashbots",
         chain_id: int = 1,
         allow_stub_swap: bool = False,
     ):
@@ -56,18 +54,19 @@ class Web3DEXExecutor(BaseConnector):
         self.chain_id = chain_id
         self.allow_stub_swap = allow_stub_swap
         self.mev = MEVProtection(provider=mev_protection) if mev_protection else None
-        self._web3: Optional[Any] = None
+        self._web3: Any | None = None
 
     async def _client(self) -> Any:
         if self._web3 is not None:
             return self._web3
-        from web3 import AsyncWeb3, AsyncHTTPProvider
+        from web3 import AsyncHTTPProvider, AsyncWeb3
+
         # Use MEV-protected RPC if configured
         endpoint = self.mev.rpc_url if self.mev else self.rpc_url
         self._web3 = AsyncWeb3(AsyncHTTPProvider(endpoint))
         return self._web3
 
-    async def get_gas_price(self) -> Dict[str, int]:
+    async def get_gas_price(self) -> dict[str, int]:
         """Fetch EIP-1559 gas parameters."""
         w3 = await self._client()
         base_fee = await w3.eth.get_block("latest")
@@ -81,7 +80,7 @@ class Web3DEXExecutor(BaseConnector):
             "max_fee_per_gas": max_fee,
         }
 
-    async def send_transaction(self, tx_dict: Dict[str, Any]) -> str:
+    async def send_transaction(self, tx_dict: dict[str, Any]) -> str:
         """Sign and broadcast a transaction. Returns tx_hash."""
         if not self.private_key:
             raise ValueError("Private key required for transaction signing")
@@ -104,7 +103,9 @@ class Web3DEXExecutor(BaseConnector):
         _logger.info("web3.tx_broadcast chain_id=%s tx_hash=%s", self.chain_id, hex_hash)
         return hex_hash
 
-    async def await_confirmation(self, tx_hash: str, confirmations: int = 2, timeout: int = 120) -> Dict[str, Any]:
+    async def await_confirmation(
+        self, tx_hash: str, confirmations: int = 2, timeout: int = 120
+    ) -> dict[str, Any]:
         """Wait for transaction receipt with confirmation depth."""
         w3 = await self._client()
         poll_interval = 2.0
@@ -134,7 +135,7 @@ class Web3DEXExecutor(BaseConnector):
         token_out: str,
         amount_in: Decimal,
         min_amount_out: Decimal,
-        recipient: Optional[str] = None,
+        recipient: str | None = None,
         deadline_seconds: int = 300,
     ) -> str:
         """
@@ -153,29 +154,39 @@ class Web3DEXExecutor(BaseConnector):
                 "exercise the architecture seam (returns a fake tx hash)."
             )
         import uuid
+
         return f"0x{uuid.uuid4().hex}"
 
-    async def get_balance(self, token_address: Optional[str] = None) -> Decimal:
+    async def get_balance(self, token_address: str | None = None) -> Decimal:
         """Get ETH or ERC-20 balance."""
         w3 = await self._client()
         if not self.private_key:
             return Decimal("0")
         from eth_account import Account
+
         account = Account.from_key(self.private_key)
         if token_address is None:
             bal = await w3.eth.get_balance(account.address)
             return Decimal(w3.from_wei(bal, "ether"))
         # ERC-20 balanceOf
-        abi = [{"constant": True, "inputs": [{"name": "_owner", "type": "address"}], "name": "balanceOf", "outputs": [{"name": "balance", "type": "uint256"}], "type": "function"}]
+        abi = [
+            {
+                "constant": True,
+                "inputs": [{"name": "_owner", "type": "address"}],
+                "name": "balanceOf",
+                "outputs": [{"name": "balance", "type": "uint256"}],
+                "type": "function",
+            }
+        ]
         contract = w3.eth.contract(address=w3.to_checksum_address(token_address), abi=abi)
         bal = await contract.functions.balanceOf(account.address).call()
-        return Decimal(bal) / Decimal(10 ** 18)
+        return Decimal(bal) / Decimal(10**18)
 
     # ------------------------------------------------------------------
     # BaseConnector interface (unified execution seam)
     # ------------------------------------------------------------------
 
-    async def run(self, context: Dict[str, Any]) -> Any:
+    async def run(self, context: dict[str, Any]) -> Any:
         """Agent dispatch entrypoint."""
         action = context.get("action")
         if action == "swap":
@@ -201,7 +212,9 @@ class Web3DEXExecutor(BaseConnector):
         else:
             raise ValueError(f"Unknown action: {action}")
 
-    async def fetch_ohlcv(self, symbol: str, timeframe: str = "1h", limit: int = 100) -> List[MarketData]:
+    async def fetch_ohlcv(
+        self, symbol: str, timeframe: str = "1h", limit: int = 100
+    ) -> list[MarketData]:
         """DEX does not natively provide OHLCV; return empty list."""
         return []
 
@@ -225,7 +238,10 @@ class Web3DEXExecutor(BaseConnector):
                 remaining=order.quantity,
             )
 
-        tx_hash = await self.swap_exact_in(
+        # Currently the tx hash is not surfaced in the ExecutionReport;
+        # we just trigger the swap and report PENDING. When swap_exact_in
+        # graduates from stub to real router, plumb tx_hash into metadata.
+        await self.swap_exact_in(
             token_in=token_in,
             token_out=token_out,
             amount_in=order.quantity,
@@ -250,7 +266,7 @@ class Web3DEXExecutor(BaseConnector):
             remaining=Decimal("0"),
         )
 
-    async def fetch_position(self, symbol: str) -> Optional[Position]:
+    async def fetch_position(self, symbol: str) -> Position | None:
         """Return token balance as a Position (LONG if holding)."""
         if not self.private_key:
             return None

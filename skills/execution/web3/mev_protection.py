@@ -12,8 +12,6 @@ Supported relays:
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
-
 
 class MEVProtection:
     """Configuration and RPC endpoint management for MEV protection."""
@@ -39,11 +37,13 @@ class MEVProtection:
 
     def __init__(self, provider: str = "flashbots"):
         if provider not in self.RELAYS:
-            raise ValueError(f"Unknown MEV provider: {provider}. Choose from {list(self.RELAYS.keys())}")
+            raise ValueError(
+                f"Unknown MEV provider: {provider}. Choose from {list(self.RELAYS.keys())}"
+            )
         self.provider = provider
         self.rpc_url = self.RELAYS[provider]["rpc"]
 
-    def headers(self) -> Dict[str, str]:
+    def headers(self) -> dict[str, str]:
         """Optional headers for RPC authentication."""
         return {"Content-Type": "application/json"}
 

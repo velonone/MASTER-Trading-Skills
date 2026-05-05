@@ -3,15 +3,14 @@ Unit tests for skills.signals — Multi-Strategy Alpha Factory.
 """
 
 import numpy as np
-import pytest
+
+from skills.core.types import SignalAction
 from skills.signals import (
-    OrderBookImbalance,
     FundingArbitrageSignal,
     KellyPositionSizer,
+    OrderBookImbalance,
 )
-from skills.signals.topological.tda import TopologicalCrashDetector
 from skills.signals.chaos.lyapunov import LyapunovExponentAnalyzer
-from skills.core.types import SignalAction
 
 
 def test_obi_calculation():
@@ -33,6 +32,7 @@ def test_obi_strong_sell():
 
 def test_funding_arbitrage_long():
     from decimal import Decimal
+
     sig = FundingArbitrageSignal(threshold=Decimal("0.0003"))
     signal = sig.generate("BTC/USDT", funding_rate=Decimal("-0.0005"))
     assert signal.action == SignalAction.BUY
@@ -41,6 +41,7 @@ def test_funding_arbitrage_long():
 
 def test_funding_arbitrage_neutral():
     from decimal import Decimal
+
     sig = FundingArbitrageSignal(threshold=Decimal("0.0003"))
     signal = sig.generate("BTC/USDT", funding_rate=Decimal("0.0001"))
     assert signal.action == SignalAction.HOLD
@@ -69,6 +70,7 @@ def test_kelly_drawdown_compression():
 
 def test_adversarial_market_maker_quote():
     from skills.signals.adversarial_rl.market_maker import AdversarialMarketMaker
+
     mm = AdversarialMarketMaker(spread_bps=10.0)
     bid, ask = mm.quote(mid_price=50000.0, volatility=0.60, inventory=0.5)
     assert bid < 50000.0 < ask
@@ -77,6 +79,7 @@ def test_adversarial_market_maker_quote():
 
 def test_adversarial_stress_test():
     from skills.signals.adversarial_rl.market_maker import AdversarialMarketMaker
+
     mm = AdversarialMarketMaker()
     paths = [np.cumsum(np.random.randn(100) * 100 + 50000) for _ in range(5)]
     stats = mm.adversarial_stress_test(paths, adversary_intensity=0.3)

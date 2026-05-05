@@ -75,11 +75,7 @@ class LyapunovExponentAnalyzer:
         fit_points = min(20, max_len)
         slope, _ = np.polyfit(range(fit_points), avg_div[:fit_points], 1)
 
-        regime = (
-            "chaotic" if slope > 0.01 else
-            "stable" if slope < -0.01 else
-            "neutral"
-        )
+        regime = "chaotic" if slope > 0.01 else "stable" if slope < -0.01 else "neutral"
 
         return {
             "lle": round(float(slope), 6),
@@ -87,8 +83,12 @@ class LyapunovExponentAnalyzer:
             "embedding_dim": self.embedding_dim,
             "lag": self.lag,
             "interpretation": (
-                "Short-term predictability possible" if regime == "chaotic" else
-                "Mean-reverting or stable dynamics" if regime == "stable" else
-                "No clear dynamical signature"
+                "Short-term predictability possible"
+                if regime == "chaotic"
+                else (
+                    "Mean-reverting or stable dynamics"
+                    if regime == "stable"
+                    else "No clear dynamical signature"
+                )
             ),
         }

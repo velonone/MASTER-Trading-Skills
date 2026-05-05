@@ -5,11 +5,12 @@ Unit tests for LLM Agent Tool Adapter.
 from decimal import Decimal
 
 import pytest
+
+from skills.adversarial.sentiment import FOMODetector
 from skills.agent import AgentPolicy, AgentToolAdapter, SkillSchemaGenerator
 from skills.core.base import BaseConnector, BaseSkill
 from skills.core.registry import SkillRegistry
-from skills.core.types import ExecutionReport, MarketData, Order, Position
-from skills.adversarial.sentiment import FOMODetector
+from skills.core.types import ExecutionReport, Order
 
 
 def test_schema_from_callable():
@@ -36,7 +37,10 @@ def test_schema_types():
 def test_schema_optional_collapses_to_inner_type():
     """Optional[int] must yield integer with nullable=True, not a dropped string."""
     from typing import Optional
-    schema = SkillSchemaGenerator._python_type_to_json(Optional[int])
+
+    # ruff UP045 suggests `int | None`, but the explicit `Optional[int]` form
+    # is the subject under test — the schema generator must handle both.
+    schema = SkillSchemaGenerator._python_type_to_json(Optional[int])  # noqa: UP045
     assert schema["type"] == "integer"
     assert schema.get("nullable") is True
 
@@ -50,6 +54,7 @@ def test_schema_decimal_is_number():
 def test_schema_literal_is_enum():
     """Literal[\"BUY\", \"SELL\"] must produce an enum, not a bare string."""
     from typing import Literal as Lit
+
     schema = SkillSchemaGenerator._python_type_to_json(Lit["BUY", "SELL"])
     assert schema["type"] == "string"
     assert schema["enum"] == ["BUY", "SELL"]
@@ -70,8 +75,7 @@ def test_schema_enum_class_is_enum():
 
 def test_schema_typed_list_preserves_item_type():
     """List[int] must produce array<integer>, not array<string>."""
-    from typing import List as Lst
-    schema = SkillSchemaGenerator._python_type_to_json(Lst[int])
+    schema = SkillSchemaGenerator._python_type_to_json(list[int])
     assert schema["type"] == "array"
     assert schema["items"]["type"] == "integer"
 
@@ -100,11 +104,14 @@ async def test_adapter_dispatch():
     registry = SkillRegistry()
     registry.register(FOMODetector())
     adapter = AgentToolAdapter(registry)
-    result = await adapter.dispatch("fomo_detector", {
-        "symbol": "BTC/USDT",
-        "prices": [50000, 52000, 55000],
-        "volumes": [100, 500, 1000],
-    })
+    result = await adapter.dispatch(
+        "fomo_detector",
+        {
+            "symbol": "BTC/USDT",
+            "prices": [50000, 52000, 55000],
+            "volumes": [100, 500, 1000],
+        },
+    )
     assert "result" in result or "error" in result
 
 
@@ -133,11 +140,14 @@ async def test_adapter_dispatch_success():
     registry = SkillRegistry()
     registry.register(FOMODetector())
     adapter = AgentToolAdapter(registry)
-    result = await adapter.dispatch("fomo_detector", {
-        "symbol": "BTC/USDT",
-        "prices": [50000, 52000],
-        "volumes": [100, 500],
-    })
+    result = await adapter.dispatch(
+        "fomo_detector",
+        {
+            "symbol": "BTC/USDT",
+            "prices": [50000, 52000],
+            "volumes": [100, 500],
+        },
+    )
     assert result["status"] == "success"
     assert "result" in result
 
@@ -148,15 +158,19 @@ async def test_adapter_dispatch_validation_error():
 
     class ValidatedSkill(BaseSkill):
         name = "validated"
+
         async def run(self, symbol: str, threshold: float = 0.5) -> dict:
             return {"symbol": symbol}
 
     registry = SkillRegistry()
     registry.register(ValidatedSkill())
     adapter = AgentToolAdapter(registry)
-    result = await adapter.dispatch("validated", {
-        # Missing required 'symbol'
-    })
+    result = await adapter.dispatch(
+        "validated",
+        {
+            # Missing required 'symbol'
+        },
+    )
     assert result["status"] == "error"
     assert result["code"] == "VALIDATION_ERROR"
 
@@ -168,6 +182,7 @@ async def test_adapter_dispatch_execution_error():
 
     class BrokenSkill(BaseSkill):
         name = "broken"
+
         async def run(self, context):
             raise RuntimeError("intentional failure")
 
@@ -194,6 +209,7 @@ def test_format_result_truncation():
 
 class _FakeConnector(BaseConnector):
     """Trade-capability skill used to exercise policy gating."""
+
     name = "fake_connector"
     description = "test trade connector"
     venue = "test"
@@ -267,11 +283,14 @@ async def test_policy_allows_signal_skill():
     registry = SkillRegistry()
     registry.register(FOMODetector())
     adapter = AgentToolAdapter(registry, policy=AgentPolicy.signal_only())
-    result = await adapter.dispatch("fomo_detector", {
-        "symbol": "BTC/USDT",
-        "prices": [50000, 52000, 55000],
-        "volumes": [100, 500, 1000],
-    })
+    result = await adapter.dispatch(
+        "fomo_detector",
+        {
+            "symbol": "BTC/USDT",
+            "prices": [50000, 52000, 55000],
+            "volumes": [100, 500, 1000],
+        },
+    )
     assert result["status"] == "success"
 
 
@@ -283,11 +302,14 @@ async def test_audit_log_records_every_dispatch():
     adapter = AgentToolAdapter(registry)
 
     await adapter.dispatch("nonexistent", {})
-    await adapter.dispatch("fomo_detector", {
-        "symbol": "BTC/USDT",
-        "prices": [50000, 52000],
-        "volumes": [100, 500],
-    })
+    await adapter.dispatch(
+        "fomo_detector",
+        {
+            "symbol": "BTC/USDT",
+            "prices": [50000, 52000],
+            "volumes": [100, 500],
+        },
+    )
 
     assert len(adapter.audit_log) == 2
     assert adapter.audit_log[0]["outcome"] == "skill_not_found"

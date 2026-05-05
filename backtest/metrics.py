@@ -7,7 +7,6 @@ Computes institutional-grade risk-adjusted performance metrics.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List, Optional
 
 import numpy as np
 import pandas as pd
@@ -16,6 +15,7 @@ import pandas as pd
 @dataclass
 class BacktestResult:
     """Container for backtest outputs."""
+
     sharpe_ratio: float = 0.0
     sortino_ratio: float = 0.0
     calmar_ratio: float = 0.0
@@ -30,10 +30,12 @@ class BacktestResult:
     trades: int = 0
     equity_curve: pd.Series = field(default_factory=lambda: pd.Series(dtype=float))
     drawdown_series: pd.Series = field(default_factory=lambda: pd.Series(dtype=float))
-    trade_log: List[dict] = field(default_factory=list)
+    trade_log: list[dict] = field(default_factory=list)
 
 
-def compute_metrics(equity_curve: pd.Series, trade_log: List[dict], risk_free_rate: float = 0.0) -> BacktestResult:
+def compute_metrics(
+    equity_curve: pd.Series, trade_log: list[dict], risk_free_rate: float = 0.0
+) -> BacktestResult:
     """Compute full metrics from an equity curve and trade log."""
     returns = equity_curve.pct_change().dropna()
     if len(returns) == 0 or returns.std() == 0:

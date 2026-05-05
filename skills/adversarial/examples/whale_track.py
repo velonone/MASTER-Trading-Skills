@@ -3,6 +3,7 @@ Example: Whale Transaction Classification
 ==========================================
 Run: python -m skills.adversarial.examples.whale_track
 """
+
 from skills.adversarial.whale import WhaleTracker
 
 

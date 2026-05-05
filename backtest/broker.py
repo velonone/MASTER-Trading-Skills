@@ -7,8 +7,6 @@ Realistic fill simulation for backtesting.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Decimal
-from typing import List, Optional
 
 import numpy as np
 
@@ -19,7 +17,7 @@ class FillResult:
     quantity: float
     slippage_bps: float
     fee: float
-    timestamp: Optional[str] = None
+    timestamp: str | None = None
 
 
 class SlippageModel:
@@ -41,7 +39,9 @@ class VolatilitySlippage(SlippageModel):
         avg_volume = bar.get("volume", 1.0)
         if avg_volume <= 0:
             avg_volume = 1.0
-        vol = bar.get("atr_14", bar["high"] - bar["low"]) / bar["close"] if bar["close"] > 0 else 0.01
+        vol = (
+            bar.get("atr_14", bar["high"] - bar["low"]) / bar["close"] if bar["close"] > 0 else 0.01
+        )
         size_ratio = abs(order_qty) / avg_volume
         slippage = self.base_bps + self.volatility_factor * vol * 100 * np.sqrt(size_ratio)
         return slippage
@@ -52,7 +52,7 @@ class BrokerSimulator:
 
     def __init__(
         self,
-        slippage_model: Optional[SlippageModel] = None,
+        slippage_model: SlippageModel | None = None,
         commission_rate: float = 0.0004,
         allow_short: bool = True,
     ):
@@ -74,9 +74,9 @@ class BrokerSimulator:
         # Adjust fill price against trader
         slippage_pct = slippage_bps / 10000.0
         if side == "buy":
-            fill_price *= (1 + slippage_pct)
+            fill_price *= 1 + slippage_pct
         else:
-            fill_price *= (1 - slippage_pct)
+            fill_price *= 1 - slippage_pct
 
         fill_price = max(bar["low"], min(bar["high"], fill_price))
         notional = fill_price * qty
@@ -91,7 +91,7 @@ class BrokerSimulator:
 
     def simulate_limit_order(
         self, qty: float, limit_price: float, bar: dict, side: str
-    ) -> Optional[FillResult]:
+    ) -> FillResult | None:
         """
         Limit order fills if price crosses limit within bar.
         Two-step logic removes lookahead bias:

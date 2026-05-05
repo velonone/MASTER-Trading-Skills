@@ -21,7 +21,7 @@ A typed, auditable trading framework for autonomous coding agents.
 
 <!-- ──────────── Status badges ──────────── -->
 
-[![Tests](https://img.shields.io/badge/tests-139%20passing-brightgreen)](tests/)
+[![CI](https://github.com/velonone/MASTER-Trading-Skills/actions/workflows/ci.yml/badge.svg)](https://github.com/velonone/MASTER-Trading-Skills/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%20|%203.12-blue?logo=python)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Pydantic](https://img.shields.io/badge/pydantic-v2-E92063?logo=pydantic&logoColor=white)](https://docs.pydantic.dev/)

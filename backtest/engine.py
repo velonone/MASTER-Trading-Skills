@@ -11,12 +11,11 @@ Usage:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-import numpy as np
 import pandas as pd
 
-from backtest.broker import BrokerSimulator, FillResult
+from backtest.broker import BrokerSimulator
 from backtest.metrics import BacktestResult, compute_metrics
 from skills.core.types import OrderSide, Signal, SignalAction  # noqa: F401
 
@@ -61,9 +60,9 @@ class BacktestEngine:
         # State
         self.capital = initial_capital
         self.position: float = 0.0  # units of base asset
-        self.equity_curve: List[float] = []
-        self.trade_log: List[Dict[str, Any]] = []
-        self._entry_price: Optional[float] = None
+        self.equity_curve: list[float] = []
+        self.trade_log: list[dict[str, Any]] = []
+        self._entry_price: float | None = None
 
     def run(self) -> BacktestResult:
         """
@@ -84,7 +83,7 @@ class BacktestEngine:
         if "timestamp" not in df.columns and "index" in df.columns:
             df.rename(columns={"index": "timestamp"}, inplace=True)
 
-        pending_signals: List[Signal] = []
+        pending_signals: list[Signal] = []
         for _, row in df.iterrows():
             bar = row.to_dict()
 
@@ -104,7 +103,9 @@ class BacktestEngine:
             else:
                 pending_signals = list(self.strategy.generate(bar))
 
-        equity_series = pd.Series(self.equity_curve, index=self.data.index[: len(self.equity_curve)])
+        equity_series = pd.Series(
+            self.equity_curve, index=self.data.index[: len(self.equity_curve)]
+        )
         return compute_metrics(equity_series, self.trade_log)
 
     def _process_signal(self, signal: Signal, bar: dict) -> None:
@@ -144,17 +145,19 @@ class BacktestEngine:
         elif self.position != 0 and self._entry_price is None:
             self._entry_price = fill.price
 
-        self.trade_log.append({
-            "timestamp": bar.get("timestamp", ""),
-            "side": side,
-            "price": fill.price,
-            "quantity": fill.quantity,
-            "slippage_bps": fill.slippage_bps,
-            "fee": fill.fee,
-            "pnl": pnl,
-            "capital": self.capital,
-            "position": self.position,
-        })
+        self.trade_log.append(
+            {
+                "timestamp": bar.get("timestamp", ""),
+                "side": side,
+                "price": fill.price,
+                "quantity": fill.quantity,
+                "slippage_bps": fill.slippage_bps,
+                "fee": fill.fee,
+                "pnl": pnl,
+                "capital": self.capital,
+                "position": self.position,
+            }
+        )
 
     def _target_position(self, signal: Signal, price: float) -> float:
         """Map signal to target position size."""

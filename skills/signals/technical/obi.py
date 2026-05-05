@@ -7,12 +7,13 @@ Positive OBI → buying pressure; Negative OBI → selling pressure.
 Reference: Stoikov (2018), "The Micro-Price: A High Frequency Estimator"
 """
 
-from typing import List, Tuple
 from skills.core.base import BaseStrategy
 from skills.core.types import Signal, SignalAction
 
 
-def calculate_obi(bids: List[Tuple[float, float]], asks: List[Tuple[float, float]], levels: int = 5) -> float:
+def calculate_obi(
+    bids: list[tuple[float, float]], asks: list[tuple[float, float]], levels: int = 5
+) -> float:
     """
     Compute Order Book Imbalance for top-N levels.
 
@@ -40,32 +41,42 @@ class OrderBookImbalance(BaseStrategy):
     version = "1.0.0"
     triggers = ["order_book", "obi", "depth", "microstructure"]
 
-    def __init__(self, levels: int = 5, long_threshold: float = 0.25, short_threshold: float = -0.25):
+    def __init__(
+        self, levels: int = 5, long_threshold: float = 0.25, short_threshold: float = -0.25
+    ):
         self.levels = levels
         self.long_threshold = long_threshold
         self.short_threshold = short_threshold
 
     def generate_signals(self, context: dict) -> list:
         """Unified interface -- delegates to generate()."""
-        return [self.generate(
-            symbol=context.get("symbol", "BTC/USDT"),
-            bids=context.get("bids", []),
-            asks=context.get("asks", []),
-        )]
+        return [
+            self.generate(
+                symbol=context.get("symbol", "BTC/USDT"),
+                bids=context.get("bids", []),
+                asks=context.get("asks", []),
+            )
+        ]
 
     async def run(self, context: dict) -> Signal:
         """Agent dispatch entrypoint."""
         signals = self.generate_signals(context)
-        return signals[0] if signals else Signal(
-            action=SignalAction.HOLD,
-            confidence=0.0,
-            strength=0.0,
-            symbol=context.get("symbol", "BTC/USDT"),
-            source=self.name,
-            evidence=["No signal generated"],
+        return (
+            signals[0]
+            if signals
+            else Signal(
+                action=SignalAction.HOLD,
+                confidence=0.0,
+                strength=0.0,
+                symbol=context.get("symbol", "BTC/USDT"),
+                source=self.name,
+                evidence=["No signal generated"],
+            )
         )
 
-    def generate(self, symbol: str, bids: List[Tuple[float, float]], asks: List[Tuple[float, float]]) -> Signal:
+    def generate(
+        self, symbol: str, bids: list[tuple[float, float]], asks: list[tuple[float, float]]
+    ) -> Signal:
         obi = calculate_obi(bids, asks, self.levels)
 
         if obi >= self.long_threshold:

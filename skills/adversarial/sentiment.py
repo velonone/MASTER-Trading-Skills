@@ -10,8 +10,6 @@ Emits standardized Signal objects for downstream risk and execution.
 from __future__ import annotations
 
 from datetime import datetime
-from decimal import Decimal
-from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -30,14 +28,6 @@ class FOMODetector(BaseSkill):
     version = "2.0.0"
     triggers = ["fomo", "panic", "greed", "sentiment", "behavioral"]
 
-    async def run(self, context: dict) -> dict:
-        """Agent dispatch entrypoint — maps context to detect()."""
-        return self.detect(
-            symbol=context.get("symbol", "UNKNOWN"),
-            prices=context.get("prices", []),
-            volumes=context.get("volumes", []),
-        )
-
     def __init__(self):
         self.thresholds = {
             "price_momentum": 0.15,
@@ -55,9 +45,9 @@ class FOMODetector(BaseSkill):
     def detect(
         self,
         symbol: str,
-        prices: List[float],
-        volumes: List[float],
-        market_cap: Optional[float] = None,
+        prices: list[float],
+        volumes: list[float],
+        market_cap: float | None = None,
     ) -> Signal:
         """
         Args:
@@ -72,7 +62,7 @@ class FOMODetector(BaseSkill):
             return self._no_data_signal(symbol)
 
         metrics = {}
-        evidence: List[str] = []
+        evidence: list[str] = []
         score = 0.0
 
         # 1. Price momentum
@@ -130,7 +120,7 @@ class FOMODetector(BaseSkill):
             timestamp=datetime.utcnow(),
         )
 
-    def _momentum(self, prices: List[float]) -> Tuple[float, str]:
+    def _momentum(self, prices: list[float]) -> tuple[float, str]:
         if len(prices) < 2:
             return 0.0, ""
         mom = (prices[-1] - prices[0]) / prices[0]
@@ -138,7 +128,7 @@ class FOMODetector(BaseSkill):
         ev = f"Price momentum {mom:+.1%}" if abs(mom) > 0.05 else ""
         return score, ev
 
-    def _volume_surge(self, volumes: List[float], market_cap: Optional[float]) -> Tuple[float, str]:
+    def _volume_surge(self, volumes: list[float], market_cap: float | None) -> tuple[float, str]:
         if len(volumes) < 2:
             return 0.0, ""
         current = volumes[-1]
@@ -150,7 +140,7 @@ class FOMODetector(BaseSkill):
         ev = f"Volume surge {ratio:.1f}x baseline" if ratio > 1.5 else ""
         return score, ev
 
-    def _acceleration(self, prices: List[float]) -> Tuple[float, str]:
+    def _acceleration(self, prices: list[float]) -> tuple[float, str]:
         if len(prices) < 3:
             return 0.0, ""
         r1 = (prices[-2] - prices[0]) / prices[0]
@@ -160,7 +150,7 @@ class FOMODetector(BaseSkill):
         ev = f"Price acceleration {accel:+.1%}" if abs(accel) > 0.03 else ""
         return score, ev
 
-    def _new_high(self, prices: List[float]) -> Tuple[float, str]:
+    def _new_high(self, prices: list[float]) -> tuple[float, str]:
         if len(prices) < 2:
             return 0.0, ""
         prev_max = max(prices[:-1])
@@ -171,7 +161,9 @@ class FOMODetector(BaseSkill):
             return score, f"New high breakthrough {breakthrough:+.1%}"
         proximity = curr / prev_max
         if proximity > self.thresholds["new_high_proximity"]:
-            score = (proximity - self.thresholds["new_high_proximity"]) / (1.0 - self.thresholds["new_high_proximity"])
+            score = (proximity - self.thresholds["new_high_proximity"]) / (
+                1.0 - self.thresholds["new_high_proximity"]
+            )
             return score, f"Near high proximity {proximity:.1%}"
         return 0.0, ""
 

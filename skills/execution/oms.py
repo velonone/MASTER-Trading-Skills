@@ -11,11 +11,10 @@ import asyncio
 import json
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from skills.core.logging import get_logger
 from skills.core.types import ExecutionReport, Order, OrderSide, Position, Signal, SignalAction
-
 
 _logger = get_logger("execution.oms")
 
@@ -27,9 +26,9 @@ class OrderManagementSystem:
     """
 
     def __init__(self):
-        self.orders: Dict[str, Order] = {}
-        self.reports: Dict[str, List[ExecutionReport]] = {}
-        self.positions: Dict[str, Position] = {}
+        self.orders: dict[str, Order] = {}
+        self.reports: dict[str, list[ExecutionReport]] = {}
+        self.positions: dict[str, Position] = {}
         self._lock = asyncio.Lock()
 
     async def submit(self, order: Order) -> str:
@@ -39,8 +38,13 @@ class OrderManagementSystem:
             order.id = oid
             self.orders[oid] = order
             self.reports[oid] = []
-            _logger.info("oms.order_submitted id=%s symbol=%s side=%s qty=%s",
-                         oid, order.symbol, order.side, order.quantity)
+            _logger.info(
+                "oms.order_submitted id=%s symbol=%s side=%s qty=%s",
+                oid,
+                order.symbol,
+                order.side,
+                order.quantity,
+            )
             return oid
 
     async def on_report(self, report: ExecutionReport) -> None:
@@ -50,8 +54,13 @@ class OrderManagementSystem:
             if oid not in self.reports:
                 self.reports[oid] = []
             self.reports[oid].append(report)
-            _logger.info("oms.report id=%s status=%s filled=%s avg_price=%s",
-                         oid, report.status, report.total_filled, report.avg_fill_price)
+            _logger.info(
+                "oms.report id=%s status=%s filled=%s avg_price=%s",
+                oid,
+                report.status,
+                report.total_filled,
+                report.avg_fill_price,
+            )
             await self._reconcile_position(report)
 
     async def _reconcile_position(self, report: ExecutionReport) -> None:
@@ -87,13 +96,18 @@ class OrderManagementSystem:
 
         # Case 1: same-direction add (or opening from flat).
         # No realized PnL; entry price is the weighted average.
-        if old_size == 0 or (old_size > 0 and signed_delta > 0) or (old_size < 0 and signed_delta < 0):
+        if (
+            old_size == 0
+            or (old_size > 0 and signed_delta > 0)
+            or (old_size < 0 and signed_delta < 0)
+        ):
             abs_old = abs(old_size)
             abs_delta = abs(signed_delta)
             new_abs = abs_old + abs_delta
             pos.entry_price = (
                 (abs_old * pos.entry_price + abs_delta * fill_price) / new_abs
-                if new_abs > 0 else Decimal("0")
+                if new_abs > 0
+                else Decimal("0")
             )
             pos.size = new_size
         else:
@@ -124,10 +138,10 @@ class OrderManagementSystem:
 
         self.positions[symbol] = pos
 
-    def position(self, symbol: str) -> Optional[Position]:
+    def position(self, symbol: str) -> Position | None:
         return self.positions.get(symbol)
 
-    def all_positions(self) -> List[Position]:
+    def all_positions(self) -> list[Position]:
         return list(self.positions.values())
 
     def signal_to_order(self, signal: Signal, qty: Decimal, order_type: str = "MARKET") -> Order:
@@ -143,13 +157,14 @@ class OrderManagementSystem:
 
     def _generate_id(self) -> str:
         import uuid
+
         return f"mt-{uuid.uuid4().hex[:12]}"
 
     # ------------------------------------------------------------------
     # Persistence (opt-in)
     # ------------------------------------------------------------------
 
-    def to_snapshot(self) -> Dict[str, Any]:
+    def to_snapshot(self) -> dict[str, Any]:
         """
         Serialize the OMS state to a JSON-friendly dict.
 
@@ -166,23 +181,25 @@ class OrderManagementSystem:
             "positions": {sym: p.model_dump(mode="json") for sym, p in self.positions.items()},
         }
 
-    def save(self, path: Union[str, Path]) -> None:
+    def save(self, path: str | Path) -> None:
         """Persist the OMS state to ``path`` as JSON. Caller picks the format."""
         target = Path(path)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(json.dumps(self.to_snapshot(), indent=2), encoding="utf-8")
 
-    def load_snapshot(self, snapshot: Dict[str, Any]) -> None:
+    def load_snapshot(self, snapshot: dict[str, Any]) -> None:
         """Restore the OMS state from a snapshot produced by :meth:`to_snapshot`."""
         self.orders = {oid: Order(**data) for oid, data in snapshot.get("orders", {}).items()}
         self.reports = {
             oid: [ExecutionReport(**r) for r in reports]
             for oid, reports in snapshot.get("reports", {}).items()
         }
-        self.positions = {sym: Position(**data) for sym, data in snapshot.get("positions", {}).items()}
+        self.positions = {
+            sym: Position(**data) for sym, data in snapshot.get("positions", {}).items()
+        }
 
     @classmethod
-    def from_file(cls, path: Union[str, Path]) -> "OrderManagementSystem":
+    def from_file(cls, path: str | Path) -> OrderManagementSystem:
         """
         Construct an OMS pre-loaded from ``path``. If the file does not
         exist, an empty OMS is returned — callers can use this as a

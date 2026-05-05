@@ -2,7 +2,6 @@
 Unit tests for skills.adversarial — Behavioral & Opponent Modeling.
 """
 
-import pytest
 from skills.adversarial.sentiment import FOMODetector
 from skills.adversarial.whale import WhaleTracker
 from skills.core.types import SignalAction
@@ -40,24 +39,28 @@ def test_whale_tracker_no_key():
 
 def test_whale_classification_accumulation():
     wt = WhaleTracker(etherscan_api_key="dummy")
-    behavior, conf, ev = wt._classify({
-        "net_flow_eth": 500.0,
-        "total_flow_eth": 1000.0,
-        "exchange_interactions": 1,
-        "token_symbol": "ETH",
-    })
+    behavior, conf, ev = wt._classify(
+        {
+            "net_flow_eth": 500.0,
+            "total_flow_eth": 1000.0,
+            "exchange_interactions": 1,
+            "token_symbol": "ETH",
+        }
+    )
     assert behavior == "accumulation"
     assert conf > 0.6
 
 
 def test_whale_classification_distribution():
     wt = WhaleTracker(etherscan_api_key="dummy")
-    behavior, conf, ev = wt._classify({
-        "net_flow_eth": -600.0,
-        "total_flow_eth": 1000.0,
-        "exchange_interactions": 6,
-        "token_symbol": "ETH",
-    })
+    behavior, conf, ev = wt._classify(
+        {
+            "net_flow_eth": -600.0,
+            "total_flow_eth": 1000.0,
+            "exchange_interactions": 6,
+            "token_symbol": "ETH",
+        }
+    )
     assert behavior == "distribution"
     assert conf > 0.6
     assert any("exchange" in e.lower() for e in ev)

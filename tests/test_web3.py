@@ -2,8 +2,10 @@
 Unit tests for Web3 DEX Execution Layer.
 """
 
-import pytest
 from decimal import Decimal
+
+import pytest
+
 from skills.execution.web3 import MEVProtection, Web3DEXExecutor
 
 

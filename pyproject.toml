@@ -150,7 +150,24 @@ disallow_untyped_defs = true
 [tool.ruff]
 target-version = "py311"
 line-length = 100
+
+[tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
+ignore = [
+    "E501",   # line-too-long — long ANSI / docstring lines are intentional
+    "B008",   # function-call-in-default-argument — common Pydantic pattern
+    "B027",   # empty-method-without-abstract-decorator — BaseSkill lifecycle hooks
+              # (start/stop) are intentionally optional for subclasses
+    "N818",   # error-suffix on exception names — domain-specific naming
+    "SIM102", # nested-if — readability is a judgement call
+    "SIM105", # try/except/pass — clearer than contextlib.suppress in our flow
+    "UP042",  # str-enum — migrating to StrEnum changes hash/equality semantics
+              # for tags persisted in JSON; not safe to auto-migrate
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["E402"]                      # tests sometimes import after fixtures
+"skills/inference/_calibration_data.py" = ["E501"]  # constant data tables
 
 [tool.black]
 line-length = 100

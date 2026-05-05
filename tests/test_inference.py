@@ -3,6 +3,7 @@ Unit tests for skills.inference — Higher-Order Reasoning Engine.
 """
 
 import pytest
+
 from skills.core.types import EventCategory
 from skills.inference import HigherOrderInferenceEngine, PrimitiveLibrary
 
@@ -25,20 +26,28 @@ def test_singularity_detection_low(engine):
 
 
 def test_singularity_detection_high(engine):
-    result = engine.detect_singularity({
-        "affects_core_assets": True,
-        "is_public": False,
-        "has_leverage_exposure": True,
-        "magnitude": "extreme",
-    })
+    result = engine.detect_singularity(
+        {
+            "affects_core_assets": True,
+            "is_public": False,
+            "has_leverage_exposure": True,
+            "magnitude": "extreme",
+        }
+    )
     assert result["is_singularity"] is True
     assert result["score"] > 0.5
 
 
 def test_causal_chain_whale_deposit(engine):
-    chain = engine.build_causal_chain("Whale deposits 5000 ETH to exchange", EventCategory.WHALE_MOVEMENT)
+    chain = engine.build_causal_chain(
+        "Whale deposits 5000 ETH to exchange", EventCategory.WHALE_MOVEMENT
+    )
     assert len(chain.effects) >= 3
-    assert "bearish" in chain.convergence or "neutral" in chain.convergence or "uncertain" in chain.convergence
+    assert (
+        "bearish" in chain.convergence
+        or "neutral" in chain.convergence
+        or "uncertain" in chain.convergence
+    )
     assert 0.0 <= chain.overall_confidence <= 1.0
 
 

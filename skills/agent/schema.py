@@ -9,17 +9,25 @@ from __future__ import annotations
 
 import enum
 import inspect
+from collections.abc import Callable
 from decimal import Decimal
-from typing import Any, Callable, Dict, List, Literal, Optional, Type, Union, get_args, get_origin, get_type_hints
+from typing import (
+    Any,
+    Literal,
+    Union,
+    get_args,
+    get_origin,
+    get_type_hints,
+)
 
-from pydantic import BaseModel, create_model
+from pydantic import BaseModel
 
 
 class SkillSchemaGenerator:
     """Generates JSON Schema from Python callables and Pydantic types."""
 
     @classmethod
-    def from_callable(cls, func: Callable, name: Optional[str] = None) -> Dict[str, Any]:
+    def from_callable(cls, func: Callable, name: str | None = None) -> dict[str, Any]:
         """
         Generate OpenAI function schema from a callable.
         """
@@ -28,8 +36,8 @@ class SkillSchemaGenerator:
         func_name = name or func.__name__
         description = inspect.getdoc(func) or f"Execute {func_name}"
 
-        properties: Dict[str, Any] = {}
-        required: List[str] = []
+        properties: dict[str, Any] = {}
+        required: list[str] = []
 
         for param_name, param in sig.parameters.items():
             if param_name == "self":
@@ -54,7 +62,7 @@ class SkillSchemaGenerator:
         }
 
     @classmethod
-    def from_pydantic_model(cls, model: Type[BaseModel], name: Optional[str] = None) -> Dict[str, Any]:
+    def from_pydantic_model(cls, model: type[BaseModel], name: str | None = None) -> dict[str, Any]:
         """Generate schema from a Pydantic model class."""
         schema = model.model_json_schema()
         return {
@@ -67,7 +75,7 @@ class SkillSchemaGenerator:
         }
 
     @classmethod
-    def _python_type_to_json(cls, py_type: Any) -> Dict[str, Any]:
+    def _python_type_to_json(cls, py_type: Any) -> dict[str, Any]:
         """
         Map Python types to JSON Schema types.
 
@@ -101,7 +109,7 @@ class SkillSchemaGenerator:
         if origin is Literal:
             values = list(args)
             json_type = cls._infer_enum_type(values)
-            schema: Dict[str, Any] = {"enum": values}
+            schema: dict[str, Any] = {"enum": values}
             if json_type is not None:
                 schema["type"] = json_type
             return schema
@@ -115,8 +123,10 @@ class SkillSchemaGenerator:
                 if has_none:
                     inner["nullable"] = True
                 return inner
-            return {"anyOf": [cls._python_type_to_json(a) for a in non_none] +
-                             ([{"type": "null"}] if has_none else [])}
+            return {
+                "anyOf": [cls._python_type_to_json(a) for a in non_none]
+                + ([{"type": "null"}] if has_none else [])
+            }
 
         if origin is list or py_type is list:
             item_type = args[0] if args else str
@@ -142,7 +152,7 @@ class SkillSchemaGenerator:
         return {"type": "string"}
 
     @staticmethod
-    def _infer_enum_type(values: List[Any]) -> Optional[str]:
+    def _infer_enum_type(values: list[Any]) -> str | None:
         """Infer a uniform JSON Schema 'type' for an enum/Literal value list."""
         if all(isinstance(v, bool) for v in values):
             return "boolean"

@@ -49,14 +49,13 @@ import json
 import os
 import sys
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from skills.core.logging import get_logger
 from skills.inference._calibration_data import VELONLABS_SNAPSHOT_2026_05
-
 
 _logger = get_logger("inference.calibration")
 
@@ -124,6 +123,7 @@ class CalibrationNotConfigured(RuntimeError):
     the user verbatim and let them choose, then call
     :meth:`Calibration.persist_choice` with the answer.
     """
+
     prompt: str = SETUP_PROMPT
 
 
@@ -140,8 +140,9 @@ class Calibration:
     inference outputs (so downstream consumers and audit logs know
     which calibration produced a given decision).
     """
-    data: Dict[str, Any]
-    meta: Dict[str, Any] = field(default_factory=dict)
+
+    data: dict[str, Any]
+    meta: dict[str, Any] = field(default_factory=dict)
 
     # ------------------------------------------------------------------
     # Public accessors used by the inference engine
@@ -155,10 +156,10 @@ class Calibration:
         return self.meta.get("source", self.data.get("source", "unknown"))
 
     @property
-    def released_at(self) -> Optional[str]:
+    def released_at(self) -> str | None:
         return self.data.get("released_at")
 
-    def age_days(self) -> Optional[int]:
+    def age_days(self) -> int | None:
         ra = self.released_at
         if not ra:
             return None
@@ -168,7 +169,7 @@ class Calibration:
             return None
         return (datetime.utcnow() - released).days
 
-    def freshness_warning(self) -> Optional[str]:
+    def freshness_warning(self) -> str | None:
         age = self.age_days()
         if age is None:
             return None
@@ -181,7 +182,7 @@ class Calibration:
             )
         return None
 
-    def emit_meta(self) -> Dict[str, Any]:
+    def emit_meta(self) -> dict[str, Any]:
         """Provenance dict to attach to engine outputs as ``_meta``."""
         return {
             "calibration_source": self.source,
@@ -196,13 +197,13 @@ class Calibration:
     # Constructors
     # ------------------------------------------------------------------
     @classmethod
-    def velonlabs_snapshot(cls) -> "Calibration":
+    def velonlabs_snapshot(cls) -> Calibration:
         """Bundled VelonLabs Reference Calibration — real values, free."""
         data = copy.deepcopy(VELONLABS_SNAPSHOT_2026_05)
         return cls(data=data, meta={"source": CalibrationSource.SNAPSHOT.value})
 
     @classmethod
-    def placeholder(cls) -> "Calibration":
+    def placeholder(cls) -> Calibration:
         """All confidences clamped to 0.5. Architecture verification only."""
         data = copy.deepcopy(VELONLABS_SNAPSHOT_2026_05)
         data["version"] = "placeholder"
@@ -215,7 +216,7 @@ class Calibration:
         return cls(data=data, meta={"source": CalibrationSource.PLACEHOLDER.value})
 
     @classmethod
-    def from_file(cls, path: os.PathLike) -> "Calibration":
+    def from_file(cls, path: os.PathLike) -> Calibration:
         """Load a calibration JSON matching the snapshot schema."""
         p = Path(path)
         with p.open("r", encoding="utf-8") as f:
@@ -233,10 +234,10 @@ class Calibration:
     @classmethod
     def resolve(
         cls,
-        explicit: Optional["Calibration"] = None,
+        explicit: Calibration | None = None,
         *,
         strict: bool = False,
-    ) -> "Calibration":
+    ) -> Calibration:
         """
         Resolve calibration in order:
             explicit kwarg → env var → config file → snapshot fallback
@@ -260,8 +261,7 @@ class Calibration:
                 if source:
                     return cls._from_source_name(source, cfg)
             except Exception as exc:  # noqa: BLE001
-                _logger.warning("calibration.config_read_failed path=%s err=%s",
-                                CONFIG_PATH, exc)
+                _logger.warning("calibration.config_read_failed path=%s err=%s", CONFIG_PATH, exc)
 
         if strict:
             raise CalibrationNotConfigured(SETUP_PROMPT)
@@ -279,8 +279,8 @@ class Calibration:
     def _from_source_name(
         cls,
         name: str,
-        config: Optional[Dict[str, Any]] = None,
-    ) -> "Calibration":
+        config: dict[str, Any] | None = None,
+    ) -> Calibration:
         config = config or {}
         name = name.strip().lower()
         if name in {CalibrationSource.SNAPSHOT.value, "default", ""}:
@@ -316,7 +316,7 @@ class Calibration:
         cls,
         source: str,
         *,
-        path: Optional[os.PathLike] = None,
+        path: os.PathLike | None = None,
     ) -> Path:
         """
         Persist the user's calibration choice to ``~/.master-trading/config.json``
@@ -324,7 +324,7 @@ class Calibration:
 
         Returns the path to the written config file.
         """
-        cfg: Dict[str, Any] = {
+        cfg: dict[str, Any] = {
             "calibration_source": source,
             "configured_at": datetime.utcnow().isoformat(),
         }
@@ -349,9 +349,9 @@ class Calibration:
         return False
 
     @classmethod
-    def show(cls) -> Dict[str, Any]:
+    def show(cls) -> dict[str, Any]:
         """Diagnostic snapshot of how :meth:`resolve` would behave right now."""
-        info: Dict[str, Any] = {
+        info: dict[str, Any] = {
             "env_var": os.environ.get(ENV_VAR),
             "config_path": str(CONFIG_PATH),
             "config_exists": CONFIG_PATH.exists(),
@@ -369,20 +369,19 @@ class Calibration:
     # Validation
     # ------------------------------------------------------------------
     @staticmethod
-    def _validate_shape(data: Dict[str, Any]) -> None:
+    def _validate_shape(data: dict[str, Any]) -> None:
         required = {"primitives", "causal_chains", "singularity_weights", "signal_thresholds"}
         missing = required - set(data.keys())
         if missing:
-            raise ValueError(
-                f"Calibration JSON is missing required keys: {sorted(missing)}"
-            )
+            raise ValueError(f"Calibration JSON is missing required keys: {sorted(missing)}")
 
 
 # ----------------------------------------------------------------------
 # CLI
 # ----------------------------------------------------------------------
 
-def _cli(argv: Optional[list] = None) -> int:
+
+def _cli(argv: list | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m skills.inference.calibration",
         description="Manage trading inference calibration source.",
@@ -415,7 +414,8 @@ def _cli(argv: Optional[list] = None) -> int:
 
     if args.cmd == "set":
         path = Calibration.persist_choice(
-            args.source, path=args.path,
+            args.source,
+            path=args.path,
         )
         print(f"saved {args.source} → {path}")
         return 0

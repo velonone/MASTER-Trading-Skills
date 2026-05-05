@@ -10,8 +10,8 @@ Design targets:
 - Sharpe, Sortino, Calmar, Omega ratios
 """
 
-from backtest.engine import BacktestEngine
 from backtest.broker import BrokerSimulator, VolatilitySlippage
+from backtest.engine import BacktestEngine
 from backtest.metrics import BacktestResult, compute_metrics
 
 __all__ = [

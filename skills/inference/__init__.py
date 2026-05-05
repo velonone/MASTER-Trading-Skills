@@ -11,10 +11,10 @@ Entry Points:
 """
 
 from skills.inference.calibration import (
+    SETUP_PROMPT,
     Calibration,
     CalibrationNotConfigured,
     CalibrationSource,
-    SETUP_PROMPT,
 )
 from skills.inference.engine import HigherOrderInferenceEngine
 from skills.inference.primitives import InferencePrimitive, PrimitiveLibrary
