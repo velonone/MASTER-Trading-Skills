@@ -1,8 +1,11 @@
 <!-- ──────────── Brand header ──────────── -->
 <table border="0" cellpadding="0" cellspacing="0">
 <tr>
-<td width="160" align="center" valign="middle">
-<img src="docs/assets/brand/velonlabs-icon.png" alt="VelonLabs" width="128" height="128">
+<td width="180" align="center" valign="middle">
+<picture>
+  <source srcset="docs/assets/brand/velonlabs-icon.svg" type="image/svg+xml">
+  <img src="docs/assets/brand/velonlabs-icon.png" alt="VelonLabs" width="156" height="156">
+</picture>
 </td>
 <td valign="middle">
 
@@ -930,7 +933,10 @@ practitioner communities. In particular:
 <table border="0" cellpadding="0" cellspacing="0">
 <tr>
 <td width="120" align="center" valign="middle">
-<img src="docs/assets/brand/velonlabs-icon.png" alt="VelonLabs" width="96" height="96">
+<picture>
+  <source srcset="docs/assets/brand/velonlabs-icon.svg" type="image/svg+xml">
+  <img src="docs/assets/brand/velonlabs-icon.png" alt="VelonLabs" width="96" height="96">
+</picture>
 </td>
 <td valign="middle">
 

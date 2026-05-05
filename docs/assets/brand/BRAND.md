@@ -12,18 +12,17 @@ projects, documentation, and social channels.
 
 | File | Purpose | Format | Status |
 |---|---|---|---|
-| `velonlabs-icon.png`             | **Primary mark** — official VelonLabs interlocking V/N. Used everywhere downstream (README, docs, NPM card). | PNG (square) | ✓ official |
-| `velonlabs-mark-light.svg`       | Placeholder light variant (for dark backgrounds). Drop the official SVG over this when ready; the filename is referenced by docs. | SVG | placeholder |
+| `velonlabs-icon.svg`             | **Primary mark — vector**. Used as the README left logo via `<picture>` (SVG with PNG fallback). | SVG (vector) | ✓ official |
+| `velonlabs-icon.png`             | Primary mark — raster fallback for tools that don't render SVG (some npm cards, certain doc generators). | PNG (square) | ✓ official |
+| `velonlabs-mark-light.svg`       | Placeholder light variant (for dark backgrounds). | SVG | placeholder |
 | `velonlabs-mark-dark.svg`        | Placeholder dark variant (for light backgrounds). | SVG | placeholder |
 | `velonlabs-wordmark.svg`         | Placeholder mark + "VELONLABS" wordmark. Horizontal lockup for narrow contexts. | SVG | placeholder |
-| `velonlabs-banner.svg`           | Placeholder mark + product name + tagline. Future README banner / social card. | SVG | placeholder |
+| `velonlabs-banner.svg`           | Placeholder mark + product name + tagline. Future social card. | SVG | placeholder |
 
-The README and About-VelonLabs section use `velonlabs-icon.png` directly
-because it is the only file that carries the official mark. The SVG
-placeholders are kept for future variants (light/dark, wordmark, banner)
-and downstream projects that want to wire up the same lockup pattern; replace
-them with official designer files whenever ready and nothing else has to
-change in consumer code.
+The README and About-VelonLabs section reference both
+`velonlabs-icon.svg` (preferred, scales sharply at any size) and
+`velonlabs-icon.png` (fallback) through HTML `<picture>` — GitHub
+serves the SVG; tools that can't, fall back automatically.
 
 ---
 
@@ -132,13 +131,13 @@ that string when persisting or visualizing model outputs.
 | File | Status |
 |---|---|
 | `BRAND.md`                  | this file (source of truth) |
-| `velonlabs-icon.png`        | official VelonLabs primary mark, dropped in 2026-05-05 |
+| `velonlabs-icon.svg`        | official VelonLabs primary mark — vector, dropped 2026-05-05 |
+| `velonlabs-icon.png`        | official raster fallback for non-SVG contexts |
 | `velonlabs-mark-light.svg`  | placeholder — replace with official light variant |
 | `velonlabs-mark-dark.svg`   | placeholder — replace with official dark variant |
 | `velonlabs-wordmark.svg`    | placeholder — replace with official wordmark |
 | `velonlabs-banner.svg`      | placeholder — replace with official banner |
 
-The official PNG is used everywhere a mark is needed today. The
+The official SVG + PNG pair drives every mark in the README. The
 remaining SVG placeholders are kept under the documented filenames so
-downstream consumers don't break when the official SVG variants are
-dropped in.
+downstream consumers don't break when the official variants land.
