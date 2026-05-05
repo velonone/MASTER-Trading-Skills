@@ -1,33 +1,30 @@
 /**
- * Animated VelonLabs Banner — Opencode-quality wordmark with depth
- * ===================================================================
- * Layout:
+ * Animated VelonLabs Banner — bold embossed wordmark
+ * =====================================================
+ * The previous wordmark used 1-col strokes which read as thin and
+ * fragile. This pass thickens every stroke to 2 columns and grows
+ * the letterform to 6 rows tall — same Opencode-style emboss, but
+ * with the visual weight of a stamped metal logo.
  *
- *     ╭──────────────────────────────────────────────────────────────────╮
- *     │                                                                  │
- *     │   █   █ █████ █     ████  █   █ █     ████  ████  ████           │ ← top edge (bright)
- *     │   █   █ █     █     █  █  ██  █ █     █  █  █  █  █              │
- *     │   █   █ ████  █     █  █  █ █ █ █     █████ ████  ████           │ ← mid (brand)
- *     │    █ █  █     █     █  █  █  ██ █     █  █  █  █     █           │
- *     │     █   █████ █████ ████  █   █ █████ █  █  ████  ████           │ ← shadow (deep)
- *     │                                                                  │
- *     │           MASTER  ·  TRADING  ·  SKILLS                          │
- *     │     v3.1.0 · 139 tests · MIT · calibration v2026.05              │
- *     │                                                                  │
- *     ╰──────────────────────────────────────────────────────────────────╯
+ *     ╭──────────────────────────────────────────────────────────────────────────╮
+ *     │                                                                          │
+ *     │     ██   ██  ██████  ██      ██████  ██   ██  ██      █████   █████      │ ← bright (top edge)
+ *     │     ██   ██  ██      ██      ██  ██  ███  ██  ██      ██  ██  ██  ██     │
+ *     │     ██   ██  ████    ██      ██  ██  ██ █ ██  ██      ██████  ██████     │ ← brand
+ *     │     ██   ██  ██      ██      ██  ██  ██ ████  ██      ██  ██  ██  ██     │
+ *     │      ██ ██   ██      ██      ██  ██  ██  ███  ██      ██  ██  ██  ██     │
+ *     │       ███    ██████  ██████  ██████  ██   ██  ██████  ██  ██  █████      │ ← shadow (bottom)
+ *     │                                                                          │
+ *     │            M A S T E R    ·    T R A D I N G    ·    S K I L L S         │
+ *     │       v3.1.0 · 139 tests · MIT · calibration v2026.05                    │
+ *     │                                                                          │
+ *     ╰──────────────────────────────────────────────────────────────────────────╯
  *
- * Depth treatment ("虚实感"):
- *
- *   - 5-row block font; each row of the wordmark is sampled from a
- *     5-stop violet ramp that runs from near-white at the top edge
- *     (#E5DAFF) down to a deep shadow at the bottom (#3A2A8F).
- *   - A sine-phase sheen rides across the columns for ~1.5 s on
- *     startup, then settles. The lightest band moves from left to
- *     right, simulating a soft highlight rolling over polished metal.
- *   - The box border, subtitle, and status row stay still throughout.
- *
- * Animation runs only on truecolor TTYs; non-TTY / no-color
- * terminals get a single static render with the same emboss.
+ * Depth (虚实感):
+ *   - 6-stop violet ramp: highlight #E5DAFF → shadow #3A2A8F
+ *   - Horizontal sheen sweeps ±1 ramp stop with sin(col + frame), so a
+ *     soft highlight rolls across the letters during the 1.6 s startup
+ *     animation, then settles to the canonical embossed frame.
  */
 
 import {
@@ -45,33 +42,121 @@ import {
   supportsTrueColorOutput,
 } from "./colors.mjs";
 
-// ─────────────────────────── 5-row block font ───────────────────────────
+// ─────────────────────────── 6-row block font ───────────────────────────
+//
+// Each glyph is exactly 6 rows tall × 6 columns wide. Strokes are 2
+// columns thick so the type reads as bold without needing a wider
+// canvas. Letter spacing is 2 columns of breathing room.
 
 const FONT = {
-  V: ["█   █", "█   █", "█   █", " █ █ ", "  █  "],
-  E: ["█████", "█    ", "████ ", "█    ", "█████"],
-  L: ["█    ", "█    ", "█    ", "█    ", "█████"],
-  O: ["█████", "█   █", "█   █", "█   █", "█████"],
-  N: ["█   █", "██  █", "█ █ █", "█  ██", "█   █"],
-  A: [" ███ ", "█   █", "█████", "█   █", "█   █"],
-  B: ["████ ", "█   █", "████ ", "█   █", "████ "],
-  S: ["█████", "█    ", "█████", "    █", "█████"],
-  M: ["█   █", "██ ██", "█ █ █", "█   █", "█   █"],
-  T: ["█████", "  █  ", "  █  ", "  █  ", "  █  "],
-  R: ["████ ", "█   █", "████ ", "█  █ ", "█   █"],
-  " ": ["     ", "     ", "     ", "     ", "     "],
+  V: [
+    "██  ██",
+    "██  ██",
+    "██  ██",
+    "██  ██",
+    " ████ ",
+    "  ██  ",
+  ],
+  E: [
+    "██████",
+    "██    ",
+    "█████ ",
+    "██    ",
+    "██    ",
+    "██████",
+  ],
+  L: [
+    "██    ",
+    "██    ",
+    "██    ",
+    "██    ",
+    "██    ",
+    "██████",
+  ],
+  O: [
+    "██████",
+    "██  ██",
+    "██  ██",
+    "██  ██",
+    "██  ██",
+    "██████",
+  ],
+  N: [
+    "██  ██",
+    "███ ██",
+    "██████",
+    "██████",
+    "██ ███",
+    "██  ██",
+  ],
+  A: [
+    " ████ ",
+    "██  ██",
+    "██  ██",
+    "██████",
+    "██  ██",
+    "██  ██",
+  ],
+  B: [
+    "█████ ",
+    "██  ██",
+    "█████ ",
+    "██  ██",
+    "██  ██",
+    "█████ ",
+  ],
+  S: [
+    "██████",
+    "██    ",
+    "██████",
+    "    ██",
+    "    ██",
+    "██████",
+  ],
+  M: [
+    "█    █",
+    "██  ██",
+    "██████",
+    "██████",
+    "██  ██",
+    "██  ██",
+  ],
+  T: [
+    "██████",
+    "  ██  ",
+    "  ██  ",
+    "  ██  ",
+    "  ██  ",
+    "  ██  ",
+  ],
+  R: [
+    "█████ ",
+    "██  ██",
+    "█████ ",
+    "█████ ",
+    "██  ██",
+    "██  ██",
+  ],
+  " ": [
+    "      ",
+    "      ",
+    "      ",
+    "      ",
+    "      ",
+    "      ",
+  ],
 };
 
 const WORDMARK_TEXT = "VELONLABS";
-const WORDMARK_GAP = 1; // cols between glyphs
+const WORDMARK_GAP = 2; // cols of breathing room between glyphs
 
 function buildWordmark(text) {
-  const rows = ["", "", "", "", ""];
+  const rows = ["", "", "", "", "", ""];
   const sep = " ".repeat(WORDMARK_GAP);
   const chars = text.split("");
   chars.forEach((ch, idx) => {
     const glyph = FONT[ch.toUpperCase()] || FONT[" "];
-    for (let r = 0; r < 5; r++) {
+    for (let r = 0; r < 6; r++) {
       rows[r] += glyph[r];
       if (idx < chars.length - 1) rows[r] += sep;
     }
@@ -82,24 +167,24 @@ function buildWordmark(text) {
 const WORDMARK_ROWS = buildWordmark(WORDMARK_TEXT);
 const WORDMARK_HEIGHT = WORDMARK_ROWS.length;
 
-const BOX_WIDTH = 76;
+// ─────────────────────────── box dimensions ───────────────────────────
+
+const BOX_WIDTH = 86;                 // bumped from 76 to host the bolder type
 const INNER_WIDTH = BOX_WIDTH - 4;
 
-// ─────────────────────────── 5-stop violet ramp ───────────────────────────
-//
-// Stronger top-to-bottom contrast than a simple 2-stop interpolation —
-// gives the wordmark a carved / pressed-into-the-surface feel.
+// ─────────────────────────── 6-stop violet ramp ───────────────────────────
+
 const RAMP = [
-  [232, 220, 255], // row 0  — near-white violet (highlight)
-  [181, 163, 255], // row 1  — violetSoft
-  [124,  92, 255], // row 2  — brand violet
-  [ 88,  64, 212], // row 3  — violetDeep
-  [ 58,  42, 143], // row 4  — deep shadow
+  [232, 220, 255], // 0 — near-white highlight
+  [200, 180, 255], // 1 — light
+  [160, 128, 255], // 2 — light-mid
+  [124,  92, 255], // 3 — brand violet
+  [ 88,  64, 212], // 4 — violetDeep
+  [ 58,  42, 143], // 5 — shadow
 ];
 
 const lerp = (a, b, t) => a + (b - a) * t;
 
-/** Mix two RGBs at t ∈ [0,1]. */
 function mix(a, b, t) {
   return [
     Math.round(lerp(a[0], b[0], t)),
@@ -108,24 +193,13 @@ function mix(a, b, t) {
   ];
 }
 
-/**
- * Resolve a colour for one wordmark cell.
- *
- * The base colour comes from the row position (0 = top highlight,
- * 4 = bottom shadow). A sine-phase sheen modulates the lookup index
- * by ±1 stop along the ramp as the highlight rolls through the
- * letters; clamped so the wordmark never loses its emboss.
- */
 function cellColor(rowIdx, col, rowLen, frame) {
-  const baseStop = rowIdx;
-  // Sheen: a soft +/- stop offset that moves with frame
-  const sheen = Math.sin((col / rowLen) * Math.PI * 2 + frame * 0.16) * 1.0;
+  const baseStop = rowIdx; // 0..5, perfectly aligned with RAMP indices
+  const sheen = Math.sin((col / rowLen) * Math.PI * 2 + frame * 0.16);
   const fStop = Math.max(0, Math.min(RAMP.length - 1, baseStop - sheen * 0.7));
-
   const lo = Math.floor(fStop);
   const hi = Math.min(RAMP.length - 1, lo + 1);
-  const t = fStop - lo;
-  return mix(RAMP[lo], RAMP[hi], t);
+  return mix(RAMP[lo], RAMP[hi], fStop - lo);
 }
 
 function colorizeWordmark(rows, frame) {
@@ -144,7 +218,7 @@ function colorizeWordmark(rows, frame) {
   });
 }
 
-// ─────────────────────────── escape-aware helpers ───────────────────────────
+// ─────────────────────────── escape-aware width helpers ───────────────────────────
 
 function visibleLength(str) {
   // eslint-disable-next-line no-control-regex
@@ -175,8 +249,7 @@ const emptyRow = () => row(" ".repeat(INNER_WIDTH));
 // ─────────────────────────── subtitle ───────────────────────────
 
 function subtitleRows({ version, calibrationVersion, testCount = 139 }) {
-  const dot = graphite("  ·  ");
-  // Subtitle: spaced-caps with strong rhythm, OpenCode-style.
+  const dot = graphite("    ·    ");
   const tagline = bold(violet("M A S T E R")) + dot +
                   bold(violet("T R A D I N G")) + dot +
                   bold(violet("S K I L L S"));
@@ -259,7 +332,6 @@ export async function animateBanner({
     process.stdout.write(lines.map((l) => ERASE_LINE + l).join("\n") + "\n");
   }
 
-  // Settle on canonical embossed frame (frame=0).
   process.stdout.write(moveUp(totalRows) + moveCol1);
   lines = composeFrameLines({
     wordmarkColored: colorizeWordmark(WORDMARK_ROWS, 0),
