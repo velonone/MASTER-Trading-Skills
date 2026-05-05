@@ -1,32 +1,46 @@
 /**
- * Animated VelonLabs Banner — mixed-case bold wordmark
- * =======================================================
- * Renders the brand exactly as written: "VelonLabs" with V and L
- * capitalised, the rest lowercase. Uppercase glyphs occupy the full
- * 6-row cap height; lowercase ascenders (l, b) match cap height; the
- * remaining lowercase letters (e, o, n, a, s) sit on the same baseline
- * but only fill rows 1-5 (x-height). This is conventional typography
- * applied to a 6-row block font, so the brand reads at a glance.
+ * Animated VelonLabs Banner — OpenCode-derived 2-layer wordmark
+ * ===============================================================
+ * Structural reference: opencode.ai/brand
+ *
+ *   Each OpenCode glyph is composed of TWO independent SVG paths:
+ *     1. an outer outline (the letter shape)
+ *     2. a smaller solid inner block, placed inside any enclosed area
+ *        and rendered in a contrasting fill color
+ *
+ *   That two-path layering is what gives OpenCode its "stenciled metal"
+ *   feel. We borrow the structure (not the colors) and apply it to the
+ *   "VelonLabs" wordmark in our brand violet.
+ *
+ * Implementation:
+ *   - 6-row × 6-col block font, mixed case (V e l o n L a b s).
+ *   - Letters with naturally enclosed bowls (o, a, b, e) carry an
+ *     inner fill block in the lower portion of their hole. The block
+ *     is encoded as the marker char "▓" inside the FONT entry; the
+ *     colorizer detects "▓" and renders it as "█" in the deepest
+ *     ramp stop, so the outline and inner fill read as two visually
+ *     distinct layers.
+ *   - Letters without enclosure (V, L, l, n, s) stay outline-only.
+ *
+ * Depth (虚实感) carried over from prior pass:
+ *   - 6-stop violet ramp: highlight #E8DCFF → shadow #3A2A8F
+ *   - Horizontal sheen: sin(col + frame · 0.16) shifts ±1 ramp stop
  *
  *     ╭──────────────────────────────────────────────────────────────────────────────╮
  *     │                                                                              │
- *     │      ██  ██                ██                       ██                       │ ← cap top
- *     │      ██  ██   ████   ██   ████   █████  ██     ████      █████               │
- *     │      ██  ██  ██  ██  ██  ██  ██  ██  ██ ██        ██     ██                  │ ← x-height
- *     │      ██  ██  ██████  ██  ██  ██  ██  ██ ██     █████ ██ ██████               │
- *     │       ████   ██      ██  ██  ██  ██  ██ ██     ██  ██ ██     ██              │
- *     │        ██     █████  ██   ████   ██  ██ ██████  █████ ██ █████               │ ← baseline
+ *     │     ██  ██               ██                  ██              ██              │
+ *     │     ██  ██   ████   ██   ████  █████  ██     ████      █████                │
+ *     │     ██  ██  ██  ██  ██  ██  ██ ██  ██ ██        ██     ██                   │
+ *     │     ██  ██  ██████  ██  ██▓▓██ ██  ██ ██     █████ ██ ██████                │
+ *     │      ████   ██      ██  ██▓▓██ ██  ██ ██     ██▓▓██ ██     ██               │
+ *     │       ██     █████  ██   ████  ██  ██ ██████  █████ ██ █████                │
+ *     │                                ↑           ↑                                │
+ *     │                          inner fill blocks (darker stop)                    │
  *     │                                                                              │
- *     │              M A S T E R    ·    T R A D I N G    ·    S K I L L S           │
- *     │            v3.1.0 · 139 tests · MIT · calibration v2026.05                   │
+ *     │             M A S T E R    ·    T R A D I N G    ·    S K I L L S           │
+ *     │           v3.1.0  ·  139 tests  ·  MIT  ·  calibration v2026.05             │
  *     │                                                                              │
  *     ╰──────────────────────────────────────────────────────────────────────────────╯
- *
- * Depth (虚实感):
- *   - 6-stop violet ramp: highlight #E8DCFF → shadow #3A2A8F.
- *   - Horizontal sheen sweeps ±1 ramp stop with sin(col + frame · 0.16),
- *     so a soft highlight rolls across the wordmark during the 1.6 s
- *     startup animation, then settles to the canonical embossed frame.
  */
 
 import {
@@ -46,12 +60,12 @@ import {
 
 // ─────────────────────────── 6-row mixed-case font ───────────────────────────
 //
-// Every glyph is exactly 6 rows × 6 cols with 2-col strokes. Lowercase
-// x-height letters leave row 0 blank; ascenders (l, b) and capitals
-// fill all six rows. Lookup is case-sensitive.
+// "▓" is the inner-fill marker. Wherever a letter has an enclosed bowl,
+// the lower portion of that bowl is filled with "▓" so the colorizer can
+// render it as the contrasting inner block (deepest violet stop). The
+// rest of the strokes stay "█" and pick up the row-gradient + sheen.
 
 const FONT = {
-  // Uppercase
   V: [
     "██  ██",
     "██  ██",
@@ -69,7 +83,6 @@ const FONT = {
     "██████",
   ],
 
-  // Lowercase ascenders (full cap height)
   l: [
     "  ██  ",
     "  ██  ",
@@ -82,26 +95,25 @@ const FONT = {
     "██    ",
     "██    ",
     "█████ ",
-    "██  ██",
-    "██  ██",
+    "██▓▓██",
+    "██▓▓██",
     "█████ ",
   ],
 
-  // Lowercase x-height (row 0 blank)
   e: [
     "      ",
     " ████ ",
     "██  ██",
     "██████",
-    "██    ",
+    "██▓▓  ",
     " █████",
   ],
   o: [
     "      ",
     " ████ ",
     "██  ██",
-    "██  ██",
-    "██  ██",
+    "██▓▓██",
+    "██▓▓██",
     " ████ ",
   ],
   n: [
@@ -117,7 +129,7 @@ const FONT = {
     " ████ ",
     "    ██",
     " █████",
-    "██  ██",
+    "██▓▓██",
     " █████",
   ],
   s: [
@@ -139,8 +151,8 @@ const FONT = {
   ],
 };
 
-const WORDMARK_TEXT = "VelonLabs"; // brand spelling — case-sensitive
-const WORDMARK_GAP = 2;            // cols of breathing room between glyphs
+const WORDMARK_TEXT = "VelonLabs";  // exact brand spelling — case-sensitive
+const WORDMARK_GAP = 2;
 
 function buildWordmark(text) {
   const rows = ["", "", "", "", "", ""];
@@ -166,25 +178,22 @@ const INNER_WIDTH = BOX_WIDTH - 4;
 // ─────────────────────────── 6-stop violet ramp ───────────────────────────
 
 const RAMP = [
-  [232, 220, 255], // 0 — highlight (cap-top edge)
+  [232, 220, 255], // 0 — highlight
   [200, 180, 255], // 1
   [160, 128, 255], // 2
   [124,  92, 255], // 3 — brand
-  [ 88,  64, 212], // 4
-  [ 58,  42, 143], // 5 — shadow (baseline)
+  [ 88,  64, 212], // 4 — violetDeep
+  [ 58,  42, 143], // 5 — shadow (used for inner fill)
 ];
 
 const lerp = (a, b, t) => a + (b - a) * t;
+const mix = (a, b, t) => [
+  Math.round(lerp(a[0], b[0], t)),
+  Math.round(lerp(a[1], b[1], t)),
+  Math.round(lerp(a[2], b[2], t)),
+];
 
-function mix(a, b, t) {
-  return [
-    Math.round(lerp(a[0], b[0], t)),
-    Math.round(lerp(a[1], b[1], t)),
-    Math.round(lerp(a[2], b[2], t)),
-  ];
-}
-
-function cellColor(rowIdx, col, rowLen, frame) {
+function outlineColor(rowIdx, col, rowLen, frame) {
   const baseStop = rowIdx;
   const sheen = Math.sin((col / rowLen) * Math.PI * 2 + frame * 0.16);
   const fStop = Math.max(0, Math.min(RAMP.length - 1, baseStop - sheen * 0.7));
@@ -193,8 +202,19 @@ function cellColor(rowIdx, col, rowLen, frame) {
   return mix(RAMP[lo], RAMP[hi], fStop - lo);
 }
 
+// Inner fill is constant — it's the "main fill" rectangle from
+// OpenCode's design. Slightly modulated by the same sheen so the
+// surface still feels alive, but anchored to the deepest stop.
+function innerColor(col, rowLen, frame) {
+  const sheen = Math.sin((col / rowLen) * Math.PI * 2 + frame * 0.16);
+  return mix(RAMP[5], RAMP[4], (1 + sheen) * 0.25); // mostly RAMP[5]
+}
+
 function colorizeWordmark(rows, frame) {
-  if (!colorEnabled) return rows.slice();
+  if (!colorEnabled) {
+    // Still substitute the marker so non-color terminals see "█"
+    return rows.map((r) => r.replace(/▓/g, "█"));
+  }
   return rows.map((row, rowIdx) => {
     let out = "";
     for (let col = 0; col < row.length; col++) {
@@ -203,7 +223,13 @@ function colorizeWordmark(rows, frame) {
         out += ch;
         continue;
       }
-      out += rgb(cellColor(rowIdx, col, row.length, frame)) + ch;
+      if (ch === "▓") {
+        // Inner fill — deepest stop, render as full block
+        out += rgb(innerColor(col, row.length, frame)) + "█" + RESET;
+        continue;
+      }
+      // Outline — row gradient + sheen
+      out += rgb(outlineColor(rowIdx, col, row.length, frame)) + ch + RESET;
     }
     return out + RESET;
   });
@@ -241,9 +267,10 @@ const emptyRow = () => row(" ".repeat(INNER_WIDTH));
 
 function subtitleRows({ version, calibrationVersion, testCount = 139 }) {
   const dot = graphite("    ·    ");
-  const tagline = bold(violet("M A S T E R")) + dot +
-                  bold(violet("T R A D I N G")) + dot +
-                  bold(violet("S K I L L S"));
+  const tagline =
+    bold(violet("M A S T E R")) + dot +
+    bold(violet("T R A D I N G")) + dot +
+    bold(violet("S K I L L S"));
   const status = [
     `v${version}`,
     `${testCount} tests`,
