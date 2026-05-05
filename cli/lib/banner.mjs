@@ -1,27 +1,33 @@
 /**
- * Animated VelonLabs Banner — Opencode-style wordmark
- * =====================================================
- * No ASCII figure. The brand surface is the wordmark itself, set in
- * 5-row block letters with a vertical violet emboss (lighter top edge,
- * darker bottom edge) and a subtle horizontal sheen that sweeps once
- * on startup before settling. The whole composition is held inside a
- * rounded-corner violet box so the banner reads as a single unit.
+ * Animated VelonLabs Banner — Opencode-quality wordmark with depth
+ * ===================================================================
+ * Layout:
  *
- *     ╭───────────────────────────────────────────────────────────────────╮
- *     │                                                                   │
- *     │    █   █  ████  ████  █████  █████  ████                          │  ← brighter (top)
- *     │    ██ ██ ██  ██ ██      █    ██     ██  █                         │
- *     │    █ █ █ █████   ███    █    ████   ████                          │
- *     │    █   █ ██  ██    ██   █    ██     ██  █                         │
- *     │    █   █ ██  ██ ████    █    █████  ██  ██                        │  ← darker (bottom)
- *     │                                                                   │
- *     │    TRADING · SKILLS    ·    by VelonLabs                          │
- *     │    v3.1.0  ·  139 tests  ·  MIT  ·  calibration v2026.05          │
- *     │                                                                   │
- *     ╰───────────────────────────────────────────────────────────────────╯
+ *     ╭──────────────────────────────────────────────────────────────────╮
+ *     │                                                                  │
+ *     │   █   █ █████ █     ████  █   █ █     ████  ████  ████           │ ← top edge (bright)
+ *     │   █   █ █     █     █  █  ██  █ █     █  █  █  █  █              │
+ *     │   █   █ ████  █     █  █  █ █ █ █     █████ ████  ████           │ ← mid (brand)
+ *     │    █ █  █     █     █  █  █  ██ █     █  █  █  █     █           │
+ *     │     █   █████ █████ ████  █   █ █████ █  █  ████  ████           │ ← shadow (deep)
+ *     │                                                                  │
+ *     │           MASTER  ·  TRADING  ·  SKILLS                          │
+ *     │     v3.1.0 · 139 tests · MIT · calibration v2026.05              │
+ *     │                                                                  │
+ *     ╰──────────────────────────────────────────────────────────────────╯
  *
- * Animation runs only on truecolor TTYs; other terminals get a single
- * static render with the same emboss but no motion.
+ * Depth treatment ("虚实感"):
+ *
+ *   - 5-row block font; each row of the wordmark is sampled from a
+ *     5-stop violet ramp that runs from near-white at the top edge
+ *     (#E5DAFF) down to a deep shadow at the bottom (#3A2A8F).
+ *   - A sine-phase sheen rides across the columns for ~1.5 s on
+ *     startup, then settles. The lightest band moves from left to
+ *     right, simulating a soft highlight rolling over polished metal.
+ *   - The box border, subtitle, and status row stay still throughout.
+ *
+ * Animation runs only on truecolor TTYs; non-TTY / no-color
+ * terminals get a single static render with the same emboss.
  */
 
 import {
@@ -42,17 +48,22 @@ import {
 // ─────────────────────────── 5-row block font ───────────────────────────
 
 const FONT = {
-  M: ["█   █", "██ ██", "█ █ █", "█   █", "█   █"],
-  A: [" ███ ", "█   █", "█████", "█   █", "█   █"],
-  S: ["█████", "█    ", "█████", "    █", "█████"],
-  T: ["█████", "  █  ", "  █  ", "  █  ", "  █  "],
+  V: ["█   █", "█   █", "█   █", " █ █ ", "  █  "],
   E: ["█████", "█    ", "████ ", "█    ", "█████"],
+  L: ["█    ", "█    ", "█    ", "█    ", "█████"],
+  O: ["█████", "█   █", "█   █", "█   █", "█████"],
+  N: ["█   █", "██  █", "█ █ █", "█  ██", "█   █"],
+  A: [" ███ ", "█   █", "█████", "█   █", "█   █"],
+  B: ["████ ", "█   █", "████ ", "█   █", "████ "],
+  S: ["█████", "█    ", "█████", "    █", "█████"],
+  M: ["█   █", "██ ██", "█ █ █", "█   █", "█   █"],
+  T: ["█████", "  █  ", "  █  ", "  █  ", "  █  "],
   R: ["████ ", "█   █", "████ ", "█  █ ", "█   █"],
   " ": ["     ", "     ", "     ", "     ", "     "],
 };
 
-const WORDMARK_TEXT = "MASTER";
-const WORDMARK_GAP = 2; // cols of space between glyphs
+const WORDMARK_TEXT = "VELONLABS";
+const WORDMARK_GAP = 1; // cols between glyphs
 
 function buildWordmark(text) {
   const rows = ["", "", "", "", ""];
@@ -69,22 +80,27 @@ function buildWordmark(text) {
 }
 
 const WORDMARK_ROWS = buildWordmark(WORDMARK_TEXT);
-const WORDMARK_WIDTH = WORDMARK_ROWS[0].length;
 const WORDMARK_HEIGHT = WORDMARK_ROWS.length;
 
-// ─────────────────────────── box dimensions ───────────────────────────
+const BOX_WIDTH = 76;
+const INNER_WIDTH = BOX_WIDTH - 4;
 
-const BOX_WIDTH = 76;                 // total width including borders
-const INNER_WIDTH = BOX_WIDTH - 4;    // minus "│ " ... " │"
-
-// ─────────────────────────── color math ───────────────────────────
+// ─────────────────────────── 5-stop violet ramp ───────────────────────────
+//
+// Stronger top-to-bottom contrast than a simple 2-stop interpolation —
+// gives the wordmark a carved / pressed-into-the-surface feel.
+const RAMP = [
+  [232, 220, 255], // row 0  — near-white violet (highlight)
+  [181, 163, 255], // row 1  — violetSoft
+  [124,  92, 255], // row 2  — brand violet
+  [ 88,  64, 212], // row 3  — violetDeep
+  [ 58,  42, 143], // row 4  — deep shadow
+];
 
 const lerp = (a, b, t) => a + (b - a) * t;
 
-/** Sample violet ramp at t ∈ [0, 1]. 0 = deep, 1 = soft (light). */
-function sampleViolet(t) {
-  const a = PALETTE.violetDeep;
-  const b = PALETTE.violetSoft;
+/** Mix two RGBs at t ∈ [0,1]. */
+function mix(a, b, t) {
   return [
     Math.round(lerp(a[0], b[0], t)),
     Math.round(lerp(a[1], b[1], t)),
@@ -93,16 +109,28 @@ function sampleViolet(t) {
 }
 
 /**
- * Render the wordmark with an embossed vertical gradient (lighter at
- * top, darker at bottom) plus an optional horizontal sheen offset by
- * `frame` so a soft highlight slides across the letters.
+ * Resolve a colour for one wordmark cell.
+ *
+ * The base colour comes from the row position (0 = top highlight,
+ * 4 = bottom shadow). A sine-phase sheen modulates the lookup index
+ * by ±1 stop along the ramp as the highlight rolls through the
+ * letters; clamped so the wordmark never loses its emboss.
  */
+function cellColor(rowIdx, col, rowLen, frame) {
+  const baseStop = rowIdx;
+  // Sheen: a soft +/- stop offset that moves with frame
+  const sheen = Math.sin((col / rowLen) * Math.PI * 2 + frame * 0.16) * 1.0;
+  const fStop = Math.max(0, Math.min(RAMP.length - 1, baseStop - sheen * 0.7));
+
+  const lo = Math.floor(fStop);
+  const hi = Math.min(RAMP.length - 1, lo + 1);
+  const t = fStop - lo;
+  return mix(RAMP[lo], RAMP[hi], t);
+}
+
 function colorizeWordmark(rows, frame) {
   if (!colorEnabled) return rows.slice();
-  const totalRows = rows.length;
   return rows.map((row, rowIdx) => {
-    // Vertical emboss: 1.0 at top → 0.0 at bottom
-    const baseT = 1 - rowIdx / (totalRows - 1);
     let out = "";
     for (let col = 0; col < row.length; col++) {
       const ch = row[col];
@@ -110,16 +138,13 @@ function colorizeWordmark(rows, frame) {
         out += ch;
         continue;
       }
-      // Horizontal sheen — gentle sine wave sliding with frame.
-      const sheen = Math.sin((col / row.length) * Math.PI * 2 + frame * 0.18) * 0.18;
-      const t = Math.max(0, Math.min(1, baseT + sheen));
-      out += rgb(sampleViolet(t)) + ch;
+      out += rgb(cellColor(rowIdx, col, row.length, frame)) + ch;
     }
     return out + RESET;
   });
 }
 
-// ─────────────────────────── escape-aware width helpers ───────────────────────────
+// ─────────────────────────── escape-aware helpers ───────────────────────────
 
 function visibleLength(str) {
   // eslint-disable-next-line no-control-regex
@@ -143,48 +168,41 @@ function padCenter(str, targetVisible) {
 
 const TOP_BORDER    = "╭" + "─".repeat(BOX_WIDTH - 2) + "╮";
 const BOTTOM_BORDER = "╰" + "─".repeat(BOX_WIDTH - 2) + "╯";
-
 const borderColor = (s) => rgb(PALETTE.violetDeep) + s + RESET;
-
 const row = (content) => borderColor("│") + " " + content + " " + borderColor("│");
 const emptyRow = () => row(" ".repeat(INNER_WIDTH));
 
-// ─────────────────────────── frame composition ───────────────────────────
+// ─────────────────────────── subtitle ───────────────────────────
 
 function subtitleRows({ version, calibrationVersion, testCount = 139 }) {
-  const dotSep = graphite("  ·  ");
-  return [
-    [
-      bold(violetSoft("TRADING · SKILLS")),
-      graphite("by"),
-      bold(violet("VelonLabs")),
-    ].join("    "),
-    [
-      `v${version}`,
-      `${testCount} tests`,
-      `MIT`,
-      `calibration v${calibrationVersion}`,
-    ].map((s) => violetSoft(s)).join(dotSep),
-  ];
+  const dot = graphite("  ·  ");
+  // Subtitle: spaced-caps with strong rhythm, OpenCode-style.
+  const tagline = bold(violet("M A S T E R")) + dot +
+                  bold(violet("T R A D I N G")) + dot +
+                  bold(violet("S K I L L S"));
+  const status = [
+    `v${version}`,
+    `${testCount} tests`,
+    `MIT`,
+    `calibration v${calibrationVersion}`,
+  ].map((s) => violetSoft(s)).join(graphite("  ·  "));
+  return [tagline, status];
 }
+
+// ─────────────────────────── frame composition ───────────────────────────
 
 function composeFrameLines({ wordmarkColored, subtitle }) {
   const lines = [];
   lines.push(borderColor(TOP_BORDER));
   lines.push(emptyRow());
 
-  // Wordmark — centred horizontally inside the box
   for (const r of wordmarkColored) {
-    const inner = padRight(padCenter(r, INNER_WIDTH), INNER_WIDTH);
-    lines.push(row(inner));
+    lines.push(row(padRight(padCenter(r, INNER_WIDTH), INNER_WIDTH)));
   }
-
   lines.push(emptyRow());
 
-  // Subtitle block — also centred
   for (const s of subtitle) {
-    const inner = padRight(padCenter(s, INNER_WIDTH), INNER_WIDTH);
-    lines.push(row(inner));
+    lines.push(row(padRight(padCenter(s, INNER_WIDTH), INNER_WIDTH)));
   }
 
   lines.push(emptyRow());
@@ -199,7 +217,6 @@ const SHOW_CURSOR = colorEnabled ? "\x1b[?25h" : "";
 const ERASE_LINE  = colorEnabled ? "\x1b[2K"  : "";
 const moveUp = (n) => (n > 0 && colorEnabled ? `\x1b[${n}A` : "");
 const moveCol1 = colorEnabled ? "\x1b[G" : "";
-
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ─────────────────────────── public API ───────────────────────────
@@ -208,8 +225,8 @@ export async function animateBanner({
   version = "?",
   calibrationVersion = "?",
   testCount = 139,
-  durationMs = 1500,
-  fps = 16,
+  durationMs = 1600,
+  fps = 18,
 } = {}) {
   const subtitle = subtitleRows({ version, calibrationVersion, testCount });
 
@@ -225,7 +242,6 @@ export async function animateBanner({
   const totalFrames = Math.max(8, Math.floor((durationMs / 1000) * fps));
   const interval = 1000 / fps;
 
-  // First paint
   let lines = composeFrameLines({
     wordmarkColored: colorizeWordmark(WORDMARK_ROWS, 0),
     subtitle,
@@ -243,7 +259,7 @@ export async function animateBanner({
     process.stdout.write(lines.map((l) => ERASE_LINE + l).join("\n") + "\n");
   }
 
-  // Settle on canonical frame
+  // Settle on canonical embossed frame (frame=0).
   process.stdout.write(moveUp(totalRows) + moveCol1);
   lines = composeFrameLines({
     wordmarkColored: colorizeWordmark(WORDMARK_ROWS, 0),
