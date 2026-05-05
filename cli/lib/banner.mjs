@@ -1,30 +1,32 @@
 /**
- * Animated VelonLabs Banner — bold embossed wordmark
- * =====================================================
- * The previous wordmark used 1-col strokes which read as thin and
- * fragile. This pass thickens every stroke to 2 columns and grows
- * the letterform to 6 rows tall — same Opencode-style emboss, but
- * with the visual weight of a stamped metal logo.
+ * Animated VelonLabs Banner — mixed-case bold wordmark
+ * =======================================================
+ * Renders the brand exactly as written: "VelonLabs" with V and L
+ * capitalised, the rest lowercase. Uppercase glyphs occupy the full
+ * 6-row cap height; lowercase ascenders (l, b) match cap height; the
+ * remaining lowercase letters (e, o, n, a, s) sit on the same baseline
+ * but only fill rows 1-5 (x-height). This is conventional typography
+ * applied to a 6-row block font, so the brand reads at a glance.
  *
- *     ╭──────────────────────────────────────────────────────────────────────────╮
- *     │                                                                          │
- *     │     ██   ██  ██████  ██      ██████  ██   ██  ██      █████   █████      │ ← bright (top edge)
- *     │     ██   ██  ██      ██      ██  ██  ███  ██  ██      ██  ██  ██  ██     │
- *     │     ██   ██  ████    ██      ██  ██  ██ █ ██  ██      ██████  ██████     │ ← brand
- *     │     ██   ██  ██      ██      ██  ██  ██ ████  ██      ██  ██  ██  ██     │
- *     │      ██ ██   ██      ██      ██  ██  ██  ███  ██      ██  ██  ██  ██     │
- *     │       ███    ██████  ██████  ██████  ██   ██  ██████  ██  ██  █████      │ ← shadow (bottom)
- *     │                                                                          │
- *     │            M A S T E R    ·    T R A D I N G    ·    S K I L L S         │
- *     │       v3.1.0 · 139 tests · MIT · calibration v2026.05                    │
- *     │                                                                          │
- *     ╰──────────────────────────────────────────────────────────────────────────╯
+ *     ╭──────────────────────────────────────────────────────────────────────────────╮
+ *     │                                                                              │
+ *     │      ██  ██                ██                       ██                       │ ← cap top
+ *     │      ██  ██   ████   ██   ████   █████  ██     ████      █████               │
+ *     │      ██  ██  ██  ██  ██  ██  ██  ██  ██ ██        ██     ██                  │ ← x-height
+ *     │      ██  ██  ██████  ██  ██  ██  ██  ██ ██     █████ ██ ██████               │
+ *     │       ████   ██      ██  ██  ██  ██  ██ ██     ██  ██ ██     ██              │
+ *     │        ██     █████  ██   ████   ██  ██ ██████  █████ ██ █████               │ ← baseline
+ *     │                                                                              │
+ *     │              M A S T E R    ·    T R A D I N G    ·    S K I L L S           │
+ *     │            v3.1.0 · 139 tests · MIT · calibration v2026.05                   │
+ *     │                                                                              │
+ *     ╰──────────────────────────────────────────────────────────────────────────────╯
  *
  * Depth (虚实感):
- *   - 6-stop violet ramp: highlight #E5DAFF → shadow #3A2A8F
- *   - Horizontal sheen sweeps ±1 ramp stop with sin(col + frame), so a
- *     soft highlight rolls across the letters during the 1.6 s startup
- *     animation, then settles to the canonical embossed frame.
+ *   - 6-stop violet ramp: highlight #E8DCFF → shadow #3A2A8F.
+ *   - Horizontal sheen sweeps ±1 ramp stop with sin(col + frame · 0.16),
+ *     so a soft highlight rolls across the wordmark during the 1.6 s
+ *     startup animation, then settles to the canonical embossed frame.
  */
 
 import {
@@ -42,13 +44,14 @@ import {
   supportsTrueColorOutput,
 } from "./colors.mjs";
 
-// ─────────────────────────── 6-row block font ───────────────────────────
+// ─────────────────────────── 6-row mixed-case font ───────────────────────────
 //
-// Each glyph is exactly 6 rows tall × 6 columns wide. Strokes are 2
-// columns thick so the type reads as bold without needing a wider
-// canvas. Letter spacing is 2 columns of breathing room.
+// Every glyph is exactly 6 rows × 6 cols with 2-col strokes. Lowercase
+// x-height letters leave row 0 blank; ascenders (l, b) and capitals
+// fill all six rows. Lookup is case-sensitive.
 
 const FONT = {
+  // Uppercase
   V: [
     "██  ██",
     "██  ██",
@@ -56,14 +59,6 @@ const FONT = {
     "██  ██",
     " ████ ",
     "  ██  ",
-  ],
-  E: [
-    "██████",
-    "██    ",
-    "█████ ",
-    "██    ",
-    "██    ",
-    "██████",
   ],
   L: [
     "██    ",
@@ -73,70 +68,67 @@ const FONT = {
     "██    ",
     "██████",
   ],
-  O: [
-    "██████",
-    "██  ██",
-    "██  ██",
-    "██  ██",
-    "██  ██",
-    "██████",
+
+  // Lowercase ascenders (full cap height)
+  l: [
+    "  ██  ",
+    "  ██  ",
+    "  ██  ",
+    "  ██  ",
+    "  ██  ",
+    "  ██  ",
   ],
-  N: [
+  b: [
+    "██    ",
+    "██    ",
+    "█████ ",
     "██  ██",
-    "███ ██",
-    "██████",
-    "██████",
-    "██ ███",
     "██  ██",
+    "█████ ",
   ],
-  A: [
+
+  // Lowercase x-height (row 0 blank)
+  e: [
+    "      ",
+    " ████ ",
+    "██  ██",
+    "██████",
+    "██    ",
+    " █████",
+  ],
+  o: [
+    "      ",
     " ████ ",
     "██  ██",
     "██  ██",
-    "██████",
+    "██  ██",
+    " ████ ",
+  ],
+  n: [
+    "      ",
+    "█████ ",
+    "██  ██",
+    "██  ██",
     "██  ██",
     "██  ██",
   ],
-  B: [
-    "█████ ",
+  a: [
+    "      ",
+    " ████ ",
+    "    ██",
+    " █████",
     "██  ██",
-    "█████ ",
-    "██  ██",
-    "██  ██",
-    "█████ ",
+    " █████",
   ],
-  S: [
-    "██████",
+  s: [
+    "      ",
+    " █████",
     "██    ",
-    "██████",
+    " ████ ",
     "    ██",
-    "    ██",
-    "██████",
-  ],
-  M: [
-    "█    █",
-    "██  ██",
-    "██████",
-    "██████",
-    "██  ██",
-    "██  ██",
-  ],
-  T: [
-    "██████",
-    "  ██  ",
-    "  ██  ",
-    "  ██  ",
-    "  ██  ",
-    "  ██  ",
-  ],
-  R: [
     "█████ ",
-    "██  ██",
-    "█████ ",
-    "█████ ",
-    "██  ██",
-    "██  ██",
   ],
+
   " ": [
     "      ",
     "      ",
@@ -147,15 +139,15 @@ const FONT = {
   ],
 };
 
-const WORDMARK_TEXT = "VELONLABS";
-const WORDMARK_GAP = 2; // cols of breathing room between glyphs
+const WORDMARK_TEXT = "VelonLabs"; // brand spelling — case-sensitive
+const WORDMARK_GAP = 2;            // cols of breathing room between glyphs
 
 function buildWordmark(text) {
   const rows = ["", "", "", "", "", ""];
   const sep = " ".repeat(WORDMARK_GAP);
   const chars = text.split("");
   chars.forEach((ch, idx) => {
-    const glyph = FONT[ch.toUpperCase()] || FONT[" "];
+    const glyph = FONT[ch] || FONT[" "];
     for (let r = 0; r < 6; r++) {
       rows[r] += glyph[r];
       if (idx < chars.length - 1) rows[r] += sep;
@@ -165,22 +157,21 @@ function buildWordmark(text) {
 }
 
 const WORDMARK_ROWS = buildWordmark(WORDMARK_TEXT);
-const WORDMARK_HEIGHT = WORDMARK_ROWS.length;
 
 // ─────────────────────────── box dimensions ───────────────────────────
 
-const BOX_WIDTH = 86;                 // bumped from 76 to host the bolder type
+const BOX_WIDTH = 86;
 const INNER_WIDTH = BOX_WIDTH - 4;
 
 // ─────────────────────────── 6-stop violet ramp ───────────────────────────
 
 const RAMP = [
-  [232, 220, 255], // 0 — near-white highlight
-  [200, 180, 255], // 1 — light
-  [160, 128, 255], // 2 — light-mid
-  [124,  92, 255], // 3 — brand violet
-  [ 88,  64, 212], // 4 — violetDeep
-  [ 58,  42, 143], // 5 — shadow
+  [232, 220, 255], // 0 — highlight (cap-top edge)
+  [200, 180, 255], // 1
+  [160, 128, 255], // 2
+  [124,  92, 255], // 3 — brand
+  [ 88,  64, 212], // 4
+  [ 58,  42, 143], // 5 — shadow (baseline)
 ];
 
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -194,7 +185,7 @@ function mix(a, b, t) {
 }
 
 function cellColor(rowIdx, col, rowLen, frame) {
-  const baseStop = rowIdx; // 0..5, perfectly aligned with RAMP indices
+  const baseStop = rowIdx;
   const sheen = Math.sin((col / rowLen) * Math.PI * 2 + frame * 0.16);
   const fStop = Math.max(0, Math.min(RAMP.length - 1, baseStop - sheen * 0.7));
   const lo = Math.floor(fStop);
