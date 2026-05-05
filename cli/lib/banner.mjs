@@ -1,31 +1,26 @@
 /**
- * Animated VelonLabs Banner
- * ==========================
- * Top of the install ceremony — a framed box with:
+ * Animated VelonLabs Banner — compact framed layout
+ * ===================================================
+ * The mark on the left is a stylised "V" letter (VelonLabs's V) drawn
+ * with diagonal block strokes — clean enough to read as a glyph in any
+ * terminal, sharp enough to feel like a brand mark. It pulses through
+ * the brand violet ramp with a sine-wave phase shift so the colour
+ * appears to rotate; the right-side text and the box border stay still.
  *
- *   ╭──────────────────────────────────────────────────────────────────╮
- *   │                                                                  │
- *   │   [LOGO]      VelonLabs                                          │
- *   │   [LOGO]                                                         │
- *   │   [LOGO]                                                         │
- *   │   [LOGO]                                                         │
- *   │   [LOGO]                                                         │
- *   │                                                                  │
- *   │              ─────────────────────────────                       │
- *   │                                                                  │
- *   │                 master-trading-skills                            │
- *   │      trading skills for autonomous coding agents                 │
- *   │       v3.1.0 · 139 tests · MIT · calibration v2026.05            │
- *   │                                                                  │
- *   ╰──────────────────────────────────────────────────────────────────╯
+ * Layout (76 cols wide, 8 rows tall including borders):
  *
- * The LOGO cells pulse through the violet brand gradient with a
- * sine-wave phase shift across both axes — the colour appears to roll
- * diagonally, giving a "rotating" feel — and settle to a static frame
- * after ~1.8 s. Border + right-side text stay still throughout.
+ *   ╭────────────────────────────────────────────────────────────────────────╮
+ *   │                                                                        │
+ *   │   █▙       ▟█      VelonLabs                                           │
+ *   │    █▙     ▟█       master-trading-skills · v3.1.0                      │
+ *   │     █▙   ▟█        trading skills for autonomous coding agents         │
+ *   │      ▜█▙▟█▛        139 tests · MIT · calibration v2026.05              │
+ *   │                                                                        │
+ *   ╰────────────────────────────────────────────────────────────────────────╯
  *
- * Animation runs only on truecolor TTYs; CI / pipes / no-color
- * terminals fall back to a single static render.
+ * The V is 4 rows × 11 cols. Right-side text is 4 rows packed tight.
+ * Animation runs only on truecolor TTYs; non-TTY / no-color terminals
+ * get a single static render.
  */
 
 import {
@@ -45,31 +40,26 @@ import {
 
 // ─────────────────────────── ASCII logo ───────────────────────────
 //
-// Stylised approximation of the VelonLabs interlocking-hex mark.
-// 5 rows × 17 cols (excluding ANSI colour codes). Block elements were
-// chosen for stable rendering on Windows Terminal, PowerShell 7,
-// macOS Terminal, iTerm2, VS Code, and tmux.
+// Diagonal V drawn with block elements. Each row is 11 cols wide.
+// The strokes are 2 cols thick so the V reads at a glance.
 const LOGO_ROWS = [
-  "  ▟▀▀▙   ▟▀▀▙  ",
-  " ▟█  █▙ ▟█  █▙ ",
-  " █   ▜█▟▛   █ ",
-  " ▜█  █▟▙█  █▛ ",
-  "  ▜▄▄▛   ▜▄▄▛  ",
+  "█▙       ▟█",
+  " █▙     ▟█ ",
+  "  █▙   ▟█  ",
+  "   ▜█▙▟█▛  ",
 ];
 
 const LOGO_WIDTH = LOGO_ROWS[0].length;
 const LOGO_HEIGHT = LOGO_ROWS.length;
 
-const BOX_WIDTH = 76;        // total width including the two border columns
-const INNER_WIDTH = BOX_WIDTH - 4; // minus "│ " ... " │"
-const LEFT_PAD = 3;          // spaces between border and logo
-const LOGO_GAP = 6;          // spaces between logo block and right-side text
+const BOX_WIDTH = 76;                 // total width including border columns
+const INNER_WIDTH = BOX_WIDTH - 4;    // minus "│ " ... " │"
+const LEFT_PAD = 3;                   // space between border and logo
+const LOGO_GAP = 6;                   // space between logo and right-side text
 
 // ─────────────────────────── color math ───────────────────────────
 
-function lerp(a, b, t) {
-  return a + (b - a) * t;
-}
+const lerp = (a, b, t) => a + (b - a) * t;
 
 /** Sample violet ramp at t∈[0,1] (0=deep, 1=soft). */
 function sampleViolet(t) {
@@ -82,15 +72,10 @@ function sampleViolet(t) {
   ];
 }
 
-/**
- * Apply rotating-gradient phase to logo cells. Each visible cell gets a
- * colour sampled from the violet ramp, indexed by
- *   phase = (col + row*2 + frame*3) mod period
- * pushed through a sine wave for smooth oscillation.
- */
+/** Apply rotating-gradient phase to the V cells. */
 function colorizeLogo(rows, frame) {
   if (!colorEnabled) return rows.slice();
-  const period = 28;
+  const period = 24;
   return rows.map((row, rowIdx) => {
     let out = "";
     for (let col = 0; col < row.length; col++) {
@@ -99,6 +84,7 @@ function colorizeLogo(rows, frame) {
         out += ch;
         continue;
       }
+      // Phase shifts diagonally: col + 2*row + 3*frame.
       const phase = (col + rowIdx * 2 + frame * 3) % period;
       const t = (1 + Math.sin((phase / period) * Math.PI * 2)) / 2;
       out += rgb(sampleViolet(t)) + ch;
@@ -119,54 +105,28 @@ function padRight(str, targetVisible) {
   return v >= targetVisible ? str : str + " ".repeat(targetVisible - v);
 }
 
-function padCenter(str, targetVisible) {
-  const v = visibleLength(str);
-  if (v >= targetVisible) return str;
-  const total = targetVisible - v;
-  const left = Math.floor(total / 2);
-  return " ".repeat(left) + str + " ".repeat(total - left);
-}
-
 // ─────────────────────────── box border ───────────────────────────
 
 const TOP_BORDER    = "╭" + "─".repeat(BOX_WIDTH - 2) + "╮";
 const BOTTOM_BORDER = "╰" + "─".repeat(BOX_WIDTH - 2) + "╯";
 
-function borderColor(s) {
-  return rgb(PALETTE.violetDeep) + s + RESET;
-}
+const borderColor = (s) => rgb(PALETTE.violetDeep) + s + RESET;
 
 function row(content) {
-  // Render one row inside the box. Content must already be padded to INNER_WIDTH.
   return borderColor("│") + " " + content + " " + borderColor("│");
 }
 
-function emptyRow() {
-  return row(" ".repeat(INNER_WIDTH));
-}
+const emptyRow = () => row(" ".repeat(INNER_WIDTH));
 
-// ─────────────────────────── frame composition ───────────────────────────
+// ─────────────────────────── right-side text ───────────────────────────
 
 function rightTextRows({ version, calibrationVersion, testCount = 139 }) {
-  const wordmark = bold(violet("VelonLabs"));
-  return [
-    wordmark,
-    "",
-    "",
-    "",
-    "",
-  ];
-}
-
-function bottomBlockRows({ version, calibrationVersion, testCount = 139 }) {
   const sep = graphite(" · ");
   return [
-    graphite("─".repeat(36)),
-    "",
-    bold(violetSoft("master-trading-skills")),
+    bold(violet("VelonLabs")),
+    bold(violetSoft("master-trading-skills")) + dim(" · v" + version),
     graphite("trading skills for autonomous coding agents"),
     [
-      `v${version}`,
       `${testCount} tests`,
       `MIT`,
       `calibration v${calibrationVersion}`,
@@ -174,20 +134,18 @@ function bottomBlockRows({ version, calibrationVersion, testCount = 139 }) {
   ];
 }
 
-function composeFrameLines({ logoColored, rightText, bottomLines }) {
+// ─────────────────────────── frame composition ───────────────────────────
+
+function composeFrameLines({ logoColored, rightText }) {
   const lines = [];
-
-  // Top border
   lines.push(borderColor(TOP_BORDER));
-
-  // Top breathing
   lines.push(emptyRow());
 
-  // Logo + right-side wordmark block (5 rows)
-  for (let i = 0; i < LOGO_HEIGHT; i++) {
+  // Content rows — height = max(logo, right text). For our spec both are 4.
+  const contentHeight = Math.max(logoColored.length, rightText.length);
+  for (let i = 0; i < contentHeight; i++) {
     const logo = i < logoColored.length ? logoColored[i] : " ".repeat(LOGO_WIDTH);
     const text = i < rightText.length ? rightText[i] : "";
-
     let inner =
       " ".repeat(LEFT_PAD) +
       padRight(logo, LOGO_WIDTH) +
@@ -197,21 +155,8 @@ function composeFrameLines({ logoColored, rightText, bottomLines }) {
     lines.push(row(inner));
   }
 
-  // Spacer
   lines.push(emptyRow());
-
-  // Centered bottom block (divider + product name + tagline + meta)
-  for (const ln of bottomLines) {
-    const inner = padCenter(ln, INNER_WIDTH);
-    lines.push(row(padRight(inner, INNER_WIDTH)));
-  }
-
-  // Bottom breathing
-  lines.push(emptyRow());
-
-  // Bottom border
   lines.push(borderColor(BOTTOM_BORDER));
-
   return lines;
 }
 
@@ -231,16 +176,14 @@ export async function animateBanner({
   version = "?",
   calibrationVersion = "?",
   testCount = 139,
-  durationMs = 1800,
+  durationMs = 1600,
   fps = 18,
 } = {}) {
   const rightText = rightTextRows({ version, calibrationVersion, testCount });
-  const bottom = bottomBlockRows({ version, calibrationVersion, testCount });
 
-  // No animation: render once, return.
   if (!colorEnabled || !supportsTrueColorOutput || !process.stdout.isTTY) {
     const colored = colorizeLogo(LOGO_ROWS, 0);
-    const lines = composeFrameLines({ logoColored: colored, rightText, bottomLines: bottom });
+    const lines = composeFrameLines({ logoColored: colored, rightText });
     process.stdout.write(lines.join("\n") + "\n");
     return;
   }
@@ -250,11 +193,10 @@ export async function animateBanner({
   const totalFrames = Math.max(8, Math.floor((durationMs / 1000) * fps));
   const interval = 1000 / fps;
 
-  // First frame: full paint.
+  // First paint
   let lines = composeFrameLines({
     logoColored: colorizeLogo(LOGO_ROWS, 0),
     rightText,
-    bottomLines: bottom,
   });
   process.stdout.write(lines.join("\n") + "\n");
   const totalRows = lines.length;
@@ -262,37 +204,32 @@ export async function animateBanner({
   for (let f = 1; f < totalFrames; f++) {
     await sleep(interval);
     process.stdout.write(moveUp(totalRows) + moveCol1);
-    const colored = colorizeLogo(LOGO_ROWS, f);
     lines = composeFrameLines({
-      logoColored: colored,
+      logoColored: colorizeLogo(LOGO_ROWS, f),
       rightText,
-      bottomLines: bottom,
     });
-    process.stdout.write(
-      lines.map((l) => ERASE_LINE + l).join("\n") + "\n",
-    );
+    process.stdout.write(lines.map((l) => ERASE_LINE + l).join("\n") + "\n");
   }
 
-  // Settle on canonical resting frame.
+  // Settle on canonical frame.
   process.stdout.write(moveUp(totalRows) + moveCol1);
   lines = composeFrameLines({
     logoColored: colorizeLogo(LOGO_ROWS, 0),
     rightText,
-    bottomLines: bottom,
   });
-  process.stdout.write(
-    lines.map((l) => ERASE_LINE + l).join("\n") + "\n",
-  );
+  process.stdout.write(lines.map((l) => ERASE_LINE + l).join("\n") + "\n");
 
   process.stdout.write(SHOW_CURSOR);
 }
 
-/** Static one-shot render (used by tests / non-interactive contexts). */
 export function renderBanner(opts = {}) {
-  const rightText = rightTextRows(opts);
-  const bottom = bottomBlockRows(opts);
+  const rightText = rightTextRows({
+    version: opts.version || "?",
+    calibrationVersion: opts.calibrationVersion || "?",
+    testCount: opts.testCount || 139,
+  });
   const colored = colorizeLogo(LOGO_ROWS, 0);
-  const lines = composeFrameLines({ logoColored: colored, rightText, bottomLines: bottom });
+  const lines = composeFrameLines({ logoColored: colored, rightText });
   return lines.join("\n");
 }
 
@@ -310,24 +247,14 @@ export class Ceremony {
     if (this._opened) console.log(this.rail());
     this._opened = true;
     console.log(violet(GLYPHS.diamond) + "  " + bold(label));
-    if (sub) {
-      for (const line of String(sub).split("\n")) {
-        console.log(this.rail("  " + graphite(line)));
-      }
-    }
+    if (sub) for (const line of String(sub).split("\n")) console.log(this.rail("  " + graphite(line)));
   }
   field(key, value) {
-    const k = graphite(String(key).padEnd(12, " "));
-    console.log(this.rail(`  ${k} ${value}`));
+    console.log(this.rail(`  ${graphite(String(key).padEnd(12, " "))} ${value}`));
   }
   line(text = "") {
-    if (text === "") {
-      console.log(this.rail());
-    } else {
-      for (const l of String(text).split("\n")) {
-        console.log(this.rail("  " + l));
-      }
-    }
+    if (text === "") console.log(this.rail());
+    else for (const l of String(text).split("\n")) console.log(this.rail("  " + l));
   }
   status(label, kind = "done") {
     const map = {
@@ -336,20 +263,12 @@ export class Ceremony {
       skip: graphite(GLYPHS.dash),
       fail: rgb(PALETTE.danger) + GLYPHS.cross + RESET,
     };
-    const icon = map[kind] || map.done;
-    console.log(this.rail(`  ${icon} ${label}`));
+    console.log(this.rail(`  ${map[kind] || map.done} ${label}`));
   }
   tagPill() {
-    if (!colorEnabled) {
-      console.log(`[${this.tag}]`);
-      console.log("");
-      return;
-    }
-    const pill = bgRgb(PALETTE.violet) + " " + bold(`[${this.tag}]`) + " " + RESET;
-    console.log(pill);
+    if (!colorEnabled) { console.log(`[${this.tag}]\n`); return; }
+    console.log(bgRgb(PALETTE.violet) + " " + bold(`[${this.tag}]`) + " " + RESET);
     console.log("");
   }
-  close() {
-    console.log(this.rail());
-  }
+  close() { console.log(this.rail()); }
 }
