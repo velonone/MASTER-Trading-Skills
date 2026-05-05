@@ -163,9 +163,15 @@ calibration without inspecting code.
 ### 1. Install
 
 **Via npx (into your agent's skill directory):**
+
+The package is currently distributed via GitHub (not yet on the npm
+registry). Install directly:
+
 ```bash
-npx master-trading-skills
+npx github:velonone/MASTER-Trading-Skills
 ```
+
+Once published to npm, `npx master-trading-skills` will also work.
 
 **Via pip (for Python development):**
 ```bash

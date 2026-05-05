@@ -244,23 +244,69 @@ MASTER-Trading-GitHub-Edition/
 
 ## Installation
 
-### Option 1: npx (Recommended for Agent Integration)
+### Option 1: npx (recommended for agent integration)
 
-Install individual skills directly into your AI agent's skill directory:
+Install skills directly into your AI agent's skill directory.
+
+The package isn't published to the npm registry yet — install **directly
+from GitHub** instead. Both forms work in `bash`, `zsh`, **PowerShell**,
+and `cmd`:
 
 ```bash
-# Interactive installation -- select skills and target agent
-npx master-trading-skills
+# Interactive — select skills and target agent through prompts
+npx github:velonone/MASTER-Trading-Skills
 
-# Non-interactive installation
-npx master-trading-skills \
+# Or pin to a specific release tag
+npx github:velonone/MASTER-Trading-Skills#v3.1.0
+```
+
+Non-interactive (one-line — works in every shell):
+
+```bash
+npx github:velonone/MASTER-Trading-Skills --agent=kimi-code --skills=core,inference,signals-technical --method=symlink
+```
+
+If you prefer multi-line, mind your shell:
+
+<details>
+<summary><strong>bash / zsh</strong></summary>
+
+```bash
+npx github:velonone/MASTER-Trading-Skills \
     --agent=kimi-code \
     --skills=core,inference,signals-technical \
     --method=symlink
 ```
+</details>
 
-Supported agents: Kimi Code CLI, Claude Code, Cursor, Cline, GitHub
-Copilot, Codex.
+<details>
+<summary><strong>PowerShell</strong> — use backtick (<code>`</code>), not <code>\</code></summary>
+
+```powershell
+npx github:velonone/MASTER-Trading-Skills `
+    --agent=kimi-code `
+    --skills=core,inference,signals-technical `
+    --method=symlink
+```
+</details>
+
+<details>
+<summary><strong>cmd.exe</strong> — use caret (<code>^</code>)</summary>
+
+```cmd
+npx github:velonone/MASTER-Trading-Skills ^
+    --agent=kimi-code ^
+    --skills=core,inference,signals-technical ^
+    --method=symlink
+```
+</details>
+
+Supported agents: `kimi-code` (Kimi Code CLI), `claude-code` (Claude Code),
+`cursor`, `cline`, `copilot` (GitHub Copilot), `codex`. Use `--agent=custom`
+plus `--target=/abs/path` to install anywhere else.
+
+> Once the package is published to npm, the shorter `npx master-trading-skills`
+> form will also work. Until then, the `github:` prefix is required.
 
 ### Option 2: pip (Python Development)
 

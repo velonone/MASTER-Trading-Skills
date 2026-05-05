@@ -3,10 +3,13 @@
  * MASTER Trading Skills Installer
  * Install individual skills to AI agent platforms.
  *
- * Usage:
+ * Usage (until published to npm — currently GitHub-direct only):
+ *   npx github:velonone/MASTER-Trading-Skills
+ *   npx github:velonone/MASTER-Trading-Skills --agent=kimi-code --skills=core,inference --method=symlink
+ *   npx github:velonone/MASTER-Trading-Skills --skills=full --agent=claude-code
+ *
+ * After npm publish, the shorter form will also work:
  *   npx master-trading-skills
- *   npx master-trading-skills --agent=kimi-code --skills=core,inference --method=symlink
- *   npx master-trading-skills --skills=full --agent=claude-code --calibration=snapshot
  */
 
 import { existsSync, mkdirSync, writeFileSync, readFileSync } from "fs";
