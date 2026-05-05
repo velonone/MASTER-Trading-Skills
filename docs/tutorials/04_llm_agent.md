@@ -28,7 +28,7 @@ tools = adapter.export_openai_tools()
 
 # Use in chat completion
 response = openai.chat.completions.create(
-    model="gpt-4-turbo",
+    model="gpt-5",  # or any current OpenAI model that supports tool calls
     messages=[
         {"role": "system", "content": "You are a quantitative trading analyst."},
         {"role": "user", "content": "Is BTC showing FOMO right now?"},

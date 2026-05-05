@@ -94,7 +94,7 @@ receipt = await executor.await_confirmation(tx_hash, confirmations=2)
 ## 3. LLM Agent Function-Calling Wrapper (C)
 
 ### Purpose
-Expose every skill as a standardized tool compatible with OpenAI Functions, Claude Tool Use, and AutoGPT.
+Expose every skill as a standardized tool compatible with the major agent runtimes — Anthropic Messages, OpenAI Responses / Chat Completions, Moonshot Kimi tools, and any runtime that accepts JSON Schema tool definitions.
 
 ### Architecture
 ```

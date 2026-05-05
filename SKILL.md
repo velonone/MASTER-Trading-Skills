@@ -31,7 +31,7 @@ triggers:
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        AGENT RUNTIME                            │
-│              (Claude / GPT-4 / AutoGPT / Local LLM)             │
+│   Claude Code · Cursor · Cline · Kimi Code · Codex · Windsurf   │
 └──────────────────────────┬──────────────────────────────────────┘
                            │ dispatches via SkillRegistry
                            ▼

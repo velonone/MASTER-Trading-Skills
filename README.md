@@ -1,4 +1,4 @@
-<!-- ──────────── Brand header (logo left · text right) ──────────── -->
+<!-- ──────────── Brand header ──────────── -->
 <table border="0" cellpadding="0" cellspacing="0">
 <tr>
 <td width="160" align="center" valign="middle">
@@ -8,9 +8,9 @@
 
 # master-trading-skills
 
-**Open-source trading skills for AI agents** — backtest, signals, execution, LLM tool surface.
+A typed, auditable trading framework for autonomous coding agents.
 
-By [VelonLabs](https://github.com/velonone) · MIT License
+<sub>v3.1.0 &nbsp;·&nbsp; 139 tests &nbsp;·&nbsp; MIT &nbsp;·&nbsp; <a href="https://github.com/velonone">VelonLabs</a></sub>
 
 </td>
 </tr>
@@ -21,26 +21,36 @@ By [VelonLabs](https://github.com/velonone) · MIT License
 [![Tests](https://img.shields.io/badge/tests-139%20passing-brightgreen)](tests/)
 [![Python](https://img.shields.io/badge/python-3.11%20|%203.12-blue?logo=python)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Pydantic](https://img.shields.io/badge/pydantic-v2-purple?logo=pydantic)](https://docs.pydantic.dev/)
+[![Pydantic](https://img.shields.io/badge/pydantic-v2-E92063?logo=pydantic&logoColor=white)](https://docs.pydantic.dev/)
 [![Calibration](https://img.shields.io/badge/calibration-v2026.05-7C5CFF)](skills/inference/_calibration_data.py)
 
-A modular skill pack that gives any AI agent (Claude, GPT-4, Kimi, Cursor,
-Cline, Codex, …) a typed, auditable surface for trading workflows: causal
-inference, technical/microstructure signals, risk-gated execution on
-CCXT/Web3, vectorised backtesting, and an LLM tool adapter with policy
-enforcement and audit logging.
+Trading skills as composable modules — drop them into any modern coding
+agent runtime ([Claude Code](https://github.com/anthropics/claude-code),
+[Cursor](https://cursor.com),
+[Cline](https://github.com/cline/cline),
+[Kimi Code](https://platform.moonshot.cn/),
+[Codex](https://github.com/openai/codex-cli),
+[Windsurf](https://codeium.com/windsurf),
+or your own) and the agent immediately gains a typed surface for
+backtesting, signal generation, risk-gated execution on CEX (CCXT) and
+DeFi (Web3), plus an LLM tool adapter with capability gating and full
+audit logging.
+
+Built for the agentic-coding generation: every numerical default carries
+provenance metadata, every tool call passes through a policy gate, every
+inference output is traceable to a versioned calibration source.
 
 ---
 
-## ⚡ Quick install
+## Quick install
 
-For AI agents (Kimi Code, Claude Code, Cursor, Cline, Codex, GitHub Copilot):
+Drop the skills directly into your coding agent's skill directory:
 
 ```bash
 npx github:velonone/MASTER-Trading-Skills
 ```
 
-For Python development:
+Or use as a Python package:
 
 ```bash
 git clone https://github.com/velonone/MASTER-Trading-Skills.git
@@ -54,19 +64,16 @@ Verify:
 python -c "from skills.core.registry import registry; registry.auto_discover('skills'); print(list(registry.list_skills()))"
 ```
 
-> Full installation options (PowerShell / cmd / pinned version / specific
-> agents) are in [Installation](#installation). PowerShell users see
-> [shell-specific syntax](#option-1-npx-recommended-for-agent-integration).
+Full per-shell variants and pinned-release syntax in [Installation](#installation).
 
 ---
 
-## ⚠️ Risk notice
+## Risk notice
 
-This software is **not financial advice** and does **not guarantee
-profits**. Trading and DeFi can result in **total loss of funds**.
-Every default value in this codebase is a starting point, not an
-absolute. Read the full [Disclaimer](#disclaimer) before running
-against live capital.
+Not financial advice, no warranty, no profit guarantee. Trading and DeFi
+can result in **total loss of funds**. Every default value in this
+codebase is a starting point, not an absolute. Read the
+[Disclaimer](#disclaimer) before running against live capital.
 
 ---
 
@@ -130,10 +137,11 @@ limitations above.
 
 ## Project Overview
 
-MASTER Trading is a modular, type-safe skill pack designed for AI agents
-(Claude, GPT-4, AutoGPT) that need to reason about financial markets,
-generate signals, manage risk, and execute trades across both centralized
-exchanges (CEX) and decentralized finance (DeFi).
+MASTER Trading is a modular, type-safe skill pack for autonomous coding
+agents — Claude Code, Cursor, Cline, Kimi Code, Codex, Windsurf, GitHub
+Copilot, and any custom runtime — that need to reason about financial
+markets, generate signals, manage risk, and execute trades across both
+centralised exchanges (CEX) and decentralised finance (DeFi).
 
 The system is built around the Trinity Architecture:
 
