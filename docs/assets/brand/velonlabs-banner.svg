@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" role="img" aria-label="master-trading-skills · by VelonLabs">
+  <title>master-trading-skills · by VelonLabs</title>
+  <!--
+    Horizontal banner: mark left, product name right, tagline beneath.
+    Renders the same in dark and light themes (transparent bg, dual-tone fills).
+    Replace mark glyphs with official VelonLabs file when available.
+  -->
+
+  <defs>
+    <style>
+      .mark    { stroke: #7C5CFF; stroke-width: 22; fill: none; stroke-linejoin: miter; stroke-linecap: square; }
+      .accent  { stroke: #7C5CFF; stroke-width: 22; fill: none; opacity: 0.55; }
+      .title   { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+                 font-weight: 700; font-size: 60px; fill: #0A0A14; }
+      .tagline { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+                 font-weight: 400; font-size: 22px; fill: #52526B; letter-spacing: 0.02em; }
+      .by      { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+                 font-weight: 600; font-size: 22px; fill: #7C5CFF; }
+      @media (prefers-color-scheme: dark) {
+        .title   { fill: #FAFAFC; }
+        .tagline { fill: #B5B5C5; }
+      }
+    </style>
+  </defs>
+
+  <!-- Mark on the left -->
+  <g transform="translate(40, 50)">
+    <path class="mark"   d="M 30 30 L 90 170 L 150 30" />
+    <path class="mark"   d="M 80 30 L 140 170 L 200 30" />
+    <path class="accent" d="M 130 30 L 190 170 L 230 80" />
+  </g>
+
+  <!-- Text block -->
+  <g transform="translate(330, 0)">
+    <text class="title"   x="0" y="135">master-trading-skills</text>
+    <text class="tagline" x="0" y="180">Open-source trading skills for AI agents</text>
+    <text class="tagline" x="0" y="210">backtest · signals · execution · LLM tool surface</text>
+    <text class="by"      x="0" y="250">by VelonLabs · MIT License</text>
+  </g>
+</svg>

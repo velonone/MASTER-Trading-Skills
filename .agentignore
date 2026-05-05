@@ -1,0 +1,60 @@
+# Agent Loading Ignore Rules
+# ==========================
+# These directories are NOT required at agent runtime.
+# Loading them wastes context window tokens without adding functionality.
+# 
+# Supported by: Kimi Code CLI, Claude Code, Cursor, Cline, Codex
+# Fallback: Agent runtime should respect this file if .gitignore-style parsing is available.
+
+# --- Non-runtime directories ---
+archive/                  # Legacy code and old report archives
+cli/                      # npx installer (Node.js) — not used by Python runtime
+docs/                     # Documentation site and tutorials
+examples/                 # Runnable demo scripts — reference only
+scripts/                  # Dev environment setup (bash/powershell)
+tests/                    # Unit tests — not needed for trading execution
+
+# --- Build artifacts ---
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# --- Environment & config ---
+.venv/
+venv/
+env/
+.vscode/
+.idea/
+
+# --- Docs-specific (already covered by docs/ but explicit is safer) ---
+docs/assets/
+docs/superpowers/
+docs/tutorials/
+
+# --- Archive internals ---
+archive/legacy_docs/
+archive/legacy_data/
+archive/computational-ontology-pqc/
+archive/financial-agent-adversarial/
+archive/grandmaster-paradigm/
+archive/nexus-growth-engine/
+archive/PROACTIVE-TRIGGER-CONDITIONS/
+archive/quant-trading-masterclass/
+archive/SENSEI/
+archive/Trinity-Weapon-System/
+archive/web3-advanced-engineering/
+
+# --- CI/DevOps (not runtime) ---
+.github/
+.pre-commit-config.yaml
+Dockerfile
+Makefile
+
+# --- Notes for Agent Developers ---
+# If your agent loader does not support .agentignore, apply this rule:
+#   Only recursively load: skills/, backtest/, and root *.md (except archive/)
+#   Skip everything else.

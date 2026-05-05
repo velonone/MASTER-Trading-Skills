@@ -1,0 +1,184 @@
+{
+  "schemaVersion": "1.0.0",
+  "packageName": "master-trading-skills",
+  "version": "3.1.0",
+  "defaultEntrypoint": "SKILL_LITE.md",
+  "skills": [
+    {
+      "id": "core",
+      "name": "Core Abstraction",
+      "description": "Universal types, base classes, and skill registry",
+      "entry": "skills/core/__init__.py",
+      "tokens": 4400,
+      "dependencies": [],
+      "triggers": [
+        "registry",
+        "types",
+        "signal",
+        "order",
+        "position",
+        "market data"
+      ]
+    },
+    {
+      "id": "inference",
+      "name": "Higher-Order Inference",
+      "description": "Causal chain simulation, singularity detection, backward induction, and self-upgrading primitives",
+      "entry": "skills/inference/engine.py",
+      "tokens": 7400,
+      "dependencies": [
+        "core"
+      ],
+      "triggers": [
+        "whale",
+        "protocol",
+        "listing",
+        "hack",
+        "singularity",
+        "causal chain",
+        "backward induction",
+        "counterfactual",
+        "primitive"
+      ]
+    },
+    {
+      "id": "signals-technical",
+      "name": "Signals — Technical",
+      "description": "Order book imbalance, funding rate arbitrage, and fractional Kelly position sizing",
+      "entry": "skills/signals/technical/__init__.py",
+      "tokens": 2200,
+      "dependencies": [
+        "core"
+      ],
+      "triggers": [
+        "order book",
+        "funding",
+        "arbitrage",
+        "kelly",
+        "position size",
+        "TWAP",
+        "slippage"
+      ]
+    },
+    {
+      "id": "signals-advanced",
+      "name": "Signals — Advanced Math",
+      "description": "Topological data analysis, chaos theory, adversarial RL market making, and genetic programming alpha evolution",
+      "entry": "skills/signals/topological/__init__.py",
+      "tokens": 4400,
+      "dependencies": [
+        "core",
+        "signals-technical"
+      ],
+      "triggers": [
+        "TDA",
+        "topology",
+        "persistent homology",
+        "chaos",
+        "Lyapunov",
+        "attractor",
+        "genetic programming",
+        "evolutionary",
+        "ViT",
+        "vision transformer"
+      ]
+    },
+    {
+      "id": "execution",
+      "name": "Execution Layer",
+      "description": "Async exchange connectors, order management system, and dynamic risk management",
+      "entry": "skills/execution/__init__.py",
+      "tokens": 6200,
+      "dependencies": [
+        "core"
+      ],
+      "triggers": [
+        "OMS",
+        "risk manager",
+        "connector",
+        "Binance",
+        "Bybit",
+        "OKX",
+        "TWAP",
+        "order execution"
+      ]
+    },
+    {
+      "id": "execution-web3",
+      "name": "Execution — Web3",
+      "description": "Web3 DEX executor with MEV protection via Flashbots Protect and MEV Blocker",
+      "entry": "skills/execution/web3/__init__.py",
+      "tokens": 1800,
+      "dependencies": [
+        "core",
+        "execution"
+      ],
+      "triggers": [
+        "Uniswap",
+        "Flashbots",
+        "MEV",
+        "gas price",
+        "swap",
+        "DEX",
+        "EIP-1559"
+      ]
+    },
+    {
+      "id": "adversarial",
+      "name": "Adversarial Intelligence",
+      "description": "Behavioral finance detectors for FOMO/panic sentiment and on-chain whale accumulation/distribution tracking",
+      "entry": "skills/adversarial/__init__.py",
+      "tokens": 3400,
+      "dependencies": [
+        "core"
+      ],
+      "triggers": [
+        "FOMO",
+        "panic",
+        "sentiment",
+        "greed",
+        "fear",
+        "whale",
+        "accumulation",
+        "distribution",
+        "behavioral finance"
+      ]
+    },
+    {
+      "id": "backtest",
+      "name": "Backtest Engine",
+      "description": "Vectorized backtesting with Almgren-Chriss slippage and professional performance metrics",
+      "entry": "backtest/__init__.py",
+      "tokens": 3700,
+      "dependencies": [
+        "core"
+      ],
+      "triggers": [
+        "backtest",
+        "Sharpe",
+        "drawdown",
+        "equity curve",
+        "slippage model",
+        "paper trading"
+      ]
+    },
+    {
+      "id": "agent",
+      "name": "LLM Agent Adapter",
+      "description": "Automatic OpenAI and Anthropic tool schema export with unified dispatch",
+      "entry": "skills/agent/__init__.py",
+      "tokens": 1800,
+      "dependencies": [
+        "core"
+      ],
+      "triggers": [
+        "OpenAI tool",
+        "Anthropic tool",
+        "function calling",
+        "tool schema",
+        "dispatch",
+        "LLM adapter"
+      ]
+    }
+  ]
+}

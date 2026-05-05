@@ -1,0 +1,41 @@
+{
+  "name": "master-trading-skills",
+  "version": "3.1.0",
+  "description": "Open-source trading skills for AI agents — backtest, signals, execution, LLM tool surface. Installable via npx. By VelonLabs.",
+  "main": "cli/install.mjs",
+  "bin": {
+    "master-trading-skills": "cli/install.mjs",
+    "mts": "cli/install.mjs"
+  },
+  "scripts": {
+    "install:cli": "node cli/install.mjs"
+  },
+  "keywords": [
+    "ai-agent",
+    "trading",
+    "quantitative-finance",
+    "skill-pack",
+    "claude-code",
+    "cursor",
+    "kimi-code",
+    "cline"
+  ],
+  "author": "VelonLabs",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/velonone/MASTER-Trading-Skills.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "skills/",
+    "backtest/",
+    "SKILL_LITE.md",
+    "SKILL.md",
+    "README.md",
+    "pyproject.toml",
+    ".agentignore"
+  ]
+}

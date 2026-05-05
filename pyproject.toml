@@ -1,0 +1,127 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "master-trading-skills"
+version = "3.1.0"
+description = "Open-source trading skills for AI agents — backtest, signals, execution, LLM tool surface. By VelonLabs."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "VelonLabs", email = "labs@velonlabs.io" }
+]
+keywords = [
+    "quantitative-trading", "algorithmic-trading", "ai-agent", "llm",
+    "claude-code", "kimi-code", "cursor", "cline", "skill-pack",
+    "web3", "defi", "ccxt", "backtest", "topological-data-analysis",
+    "adversarial-rl", "mev", "flashbots", "risk-management",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+requires-python = ">=3.11"
+dependencies = [
+    # Data & Math
+    "numpy>=1.26",
+    "pandas>=2.1",
+    "scipy>=1.11",
+    "numba>=0.58",
+    # Trading & Markets
+    "ccxt>=4.2",
+    "yfinance>=0.2",
+    "pandas-ta>=0.3",
+    # ML & Deep Learning
+    "torch>=2.1",
+    "timm>=0.9",
+    "torchvision>=0.16",
+    "stable-baselines3>=2.2",
+    "gymnasium>=0.29",
+    # Web3
+    "web3>=7.0",
+    "eth-account>=0.10",
+    "py-solc-x>=1.12",
+    # Visualization
+    "matplotlib>=3.8",
+    "mplfinance>=0.12",
+    "plotly>=5.18",
+    # Utilities
+    "pydantic>=2.5",
+    "pydantic-settings>=2.1",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0",
+    "structlog>=23.2",
+    "orjson>=3.9",
+    "tenacity>=8.2",
+    "httpx>=0.25",
+    "websockets>=12.0",
+]
+
+[project.optional-dependencies]
+advanced = [
+    # Advanced Math & TDA
+    "ripser>=0.6",
+    "persim>=0.3",
+    "giotto-tda>=0.6",
+    "gudhi>=3.9",
+    # Evolutionary
+    "deap>=1.4",
+    "gplearn>=0.4",
+    # Tensor Networks
+    "tensornetwork>=0.4",
+    "quimb>=0.4",
+]
+dev = [
+    "pytest>=7.4",
+    "pytest-asyncio>=0.21",
+    "pytest-cov>=4.1",
+    "hypothesis>=6.92",
+    "mypy>=1.7",
+    "ruff>=0.1",
+    "black>=23.12",
+    "pre-commit>=3.6",
+]
+security = [
+    "slither-analyzer>=0.10",
+    "halmos>=0.4",
+    "mythril>=0.23",
+]
+
+[project.urls]
+Homepage = "https://github.com/velonone/MASTER-Trading-Skills"
+Documentation = "https://github.com/velonone/MASTER-Trading-Skills/tree/main/docs"
+Repository = "https://github.com/velonone/MASTER-Trading-Skills"
+Issues = "https://github.com/velonone/MASTER-Trading-Skills/issues"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+addopts = "-v"
+asyncio_mode = "auto"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]

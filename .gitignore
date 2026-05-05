@@ -1,0 +1,106 @@
+# Local Claude Code / agent configuration (per-user, never publish)
+.claude/
+.cursor/
+.qoder/
+
+# Security - API Keys and Credentials
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+secrets/
+credentials/
+
+# Calibration — private user calibration files must never be committed.
+# The bundled VelonLabs Reference Snapshot in skills/inference/_calibration_data.py
+# is the only calibration file that lives in the repo. Everything else is
+# user-specific (their trade history, their VelonLabs API key, their custom
+# JSON) and stays local.
+.master-trading/
+calibration_*.json
+!skills/inference/_calibration_data.py
+*.calibration.json
+my_calibration.json
+trades_*.csv
+trade_history*.csv
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+ENV/
+env/
+.venv/
+v/
+
+# Archive (legacy files kept locally, not tracked)
+archive/
+
+# MkDocs
+site/
+
+# Local environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Data (optional - uncomment if you don't want to track data files)
+# data/cache/
+# data/tracking/
+
+# Logs
+*.log
+logs/
+
+# Node.js
+node_modules/
+package-lock.json
+yarn.lock
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/

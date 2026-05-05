@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discussions
+    url: https://github.com/velonone/MASTER-Trading-Skills/discussions
+    about: General questions, design discussion, share what you're building.
+  - name: Security disclosure
+    url: https://github.com/velonone/MASTER-Trading-Skills/security/policy
+    about: Report security issues privately. Do NOT open a public issue.
+  - name: VelonLabs brand / commercial inquiries
+    url: https://github.com/velonone/MASTER-Trading-Skills/blob/main/docs/assets/brand/BRAND.md
+    about: Logo usage, attribution, calibration subscription.

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="VelonLabs">
+  <title>VelonLabs</title>
+  <!--
+    Placeholder mark — geometric interlocking "VL" lockup.
+    Dark variant: violet on transparent. Use on light surfaces.
+    Same color as the light variant; only the surrounding context changes.
+  -->
+  <g fill="none" stroke="#5840D4" stroke-width="20" stroke-linejoin="miter" stroke-linecap="square">
+    <path d="M 40 60 L 96 196 L 152 60" />
+    <path d="M 80 60 L 136 196 L 192 60" />
+    <path d="M 120 60 L 176 196 L 216 100" opacity="0.55" />
+  </g>
+</svg>

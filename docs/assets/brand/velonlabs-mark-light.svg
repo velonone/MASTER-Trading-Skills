@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="VelonLabs">
+  <title>VelonLabs</title>
+  <!--
+    Placeholder mark — geometric interlocking "VL" lockup.
+    Replace with official VelonLabs designer file when available.
+    Light variant: violet on transparent. Use on dark surfaces.
+    Color: var(--velon-violet) = #7C5CFF
+  -->
+  <g fill="none" stroke="#7C5CFF" stroke-width="20" stroke-linejoin="miter" stroke-linecap="square">
+    <!-- Outer V -->
+    <path d="M 40 60 L 96 196 L 152 60" />
+    <!-- Middle V offset -->
+    <path d="M 80 60 L 136 196 L 192 60" />
+    <!-- Inner accent V -->
+    <path d="M 120 60 L 176 196 L 216 100" opacity="0.55" />
+  </g>
+</svg>
