@@ -10,19 +10,20 @@ projects, documentation, and social channels.
 
 ## Asset Map
 
-| File | Purpose | Format | Min size | Background |
-|---|---|---|---|---|
-| `velonlabs-mark.svg`            | The mark only (geometric "VL" interlock). Square. | SVG | 32×32 | Transparent |
-| `velonlabs-mark-light.svg`      | Mark for use on dark surfaces (light fill).       | SVG | 32×32 | Transparent |
-| `velonlabs-mark-dark.svg`       | Mark for use on light surfaces (dark fill).       | SVG | 32×32 | Transparent |
-| `velonlabs-wordmark.svg`        | Mark + "VELONLABS" text. Horizontal lockup.       | SVG | 200×60 | Transparent |
-| `velonlabs-banner.svg`          | Mark + product name + tagline. README-ready.      | SVG | 1200×300 | Transparent |
-| `velonlabs-social-card.png`     | GitHub/Twitter social preview.                    | PNG | 1280×640 | Brand purple |
-| `favicon.ico` / `favicon-32.png`| Docs site favicon.                                | ICO/PNG | 32×32 | Transparent |
+| File | Purpose | Format | Status |
+|---|---|---|---|
+| `velonlabs-icon.png`             | **Primary mark** — official VelonLabs interlocking V/N. Used everywhere downstream (README, docs, NPM card). | PNG (square) | ✓ official |
+| `velonlabs-mark-light.svg`       | Placeholder light variant (for dark backgrounds). Drop the official SVG over this when ready; the filename is referenced by docs. | SVG | placeholder |
+| `velonlabs-mark-dark.svg`        | Placeholder dark variant (for light backgrounds). | SVG | placeholder |
+| `velonlabs-wordmark.svg`         | Placeholder mark + "VELONLABS" wordmark. Horizontal lockup for narrow contexts. | SVG | placeholder |
+| `velonlabs-banner.svg`           | Placeholder mark + product name + tagline. Future README banner / social card. | SVG | placeholder |
 
-If you only have time to ship two files: `velonlabs-mark-light.svg` and
-`velonlabs-mark-dark.svg`. The README uses `<picture>` to pick whichever
-matches the viewer's GitHub theme.
+The README and About-VelonLabs section use `velonlabs-icon.png` directly
+because it is the only file that carries the official mark. The SVG
+placeholders are kept for future variants (light/dark, wordmark, banner)
+and downstream projects that want to wire up the same lockup pattern; replace
+them with official designer files whenever ready and nothing else has to
+change in consumer code.
 
 ---
 
@@ -130,10 +131,14 @@ that string when persisting or visualizing model outputs.
 
 | File | Status |
 |---|---|
-| `BRAND.md` | this file |
-| `velonlabs-mark-placeholder.svg` | bundled placeholder rendered from spec |
-| All other assets | **TODO** — to be replaced with official VelonLabs designer files |
+| `BRAND.md`                  | this file (source of truth) |
+| `velonlabs-icon.png`        | official VelonLabs primary mark, dropped in 2026-05-05 |
+| `velonlabs-mark-light.svg`  | placeholder — replace with official light variant |
+| `velonlabs-mark-dark.svg`   | placeholder — replace with official dark variant |
+| `velonlabs-wordmark.svg`    | placeholder — replace with official wordmark |
+| `velonlabs-banner.svg`      | placeholder — replace with official banner |
 
-The placeholder mark is sized and colored to the spec above. Drop the
-official SVG over it whenever ready; nothing else has to change because
-all consumers reference filenames, not contents.
+The official PNG is used everywhere a mark is needed today. The
+remaining SVG placeholders are kept under the documented filenames so
+downstream consumers don't break when the official SVG variants are
+dropped in.

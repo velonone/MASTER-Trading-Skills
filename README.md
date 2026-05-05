@@ -2,10 +2,7 @@
 <table border="0" cellpadding="0" cellspacing="0">
 <tr>
 <td width="160" align="center" valign="middle">
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/brand/velonlabs-mark-light.svg">
-  <img src="docs/assets/brand/velonlabs-mark-dark.svg" alt="VelonLabs" width="128" height="128">
-</picture>
+<img src="docs/assets/brand/velonlabs-icon.png" alt="VelonLabs" width="128" height="128">
 </td>
 <td valign="middle">
 
@@ -33,31 +30,66 @@ inference, technical/microstructure signals, risk-gated execution on
 CCXT/Web3, vectorised backtesting, and an LLM tool adapter with policy
 enforcement and audit logging.
 
-> ⚠️ **Risk notice** — This software is not financial advice. See the
-> [Disclaimer](#disclaimer) section before you run any of it against
-> real capital.
+---
+
+## ⚡ Quick install
+
+For AI agents (Kimi Code, Claude Code, Cursor, Cline, Codex, GitHub Copilot):
+
+```bash
+npx github:velonone/MASTER-Trading-Skills
+```
+
+For Python development:
+
+```bash
+git clone https://github.com/velonone/MASTER-Trading-Skills.git
+cd MASTER-Trading-Skills
+pip install -e ".[dev]"
+```
+
+Verify:
+
+```bash
+python -c "from skills.core.registry import registry; registry.auto_discover('skills'); print(list(registry.list_skills()))"
+```
+
+> Full installation options (PowerShell / cmd / pinned version / specific
+> agents) are in [Installation](#installation). PowerShell users see
+> [shell-specific syntax](#option-1-npx-recommended-for-agent-integration).
+
+---
+
+## ⚠️ Risk notice
+
+This software is **not financial advice** and does **not guarantee
+profits**. Trading and DeFi can result in **total loss of funds**.
+Every default value in this codebase is a starting point, not an
+absolute. Read the full [Disclaimer](#disclaimer) before running
+against live capital.
 
 ---
 
 ## Table of Contents
 
-1.  [Disclaimer](#disclaimer)
-2.  [Project Overview](#project-overview)
-3.  [Design Principles](#design-principles)
-4.  [Project Structure](#project-structure)
-5.  [Installation](#installation)
-6.  [Calibration](#calibration)
-7.  [Quick Start](#quick-start)
-8.  [Runnable Examples](#runnable-examples)
-9.  [Agent Integration (Context-Optimized)](#agent-integration-context-optimized)
-10. [Skill Inventory](#skill-inventory)
-11. [Architecture](#architecture)
-12. [Technology Stack](#technology-stack)
-13. [Documentation](#documentation)
-14. [Testing](#testing)
-15. [Benchmarks](#benchmarks)
-16. [Roadmap](#roadmap)
-17. [Contributing](#contributing)
+1.  [Quick install](#-quick-install)
+2.  [Risk notice](#%EF%B8%8F-risk-notice) · full [Disclaimer](#disclaimer)
+3.  [Project Overview](#project-overview)
+4.  [Design Principles](#design-principles)
+5.  [Project Structure](#project-structure)
+6.  [Installation](#installation)
+7.  [Calibration](#calibration)
+8.  [Quick Start](#quick-start)
+9.  [Runnable Examples](#runnable-examples)
+10. [Agent Integration (Context-Optimized)](#agent-integration-context-optimized)
+11. [Skill Inventory](#skill-inventory)
+12. [Architecture](#architecture)
+13. [Technology Stack](#technology-stack)
+14. [Documentation](#documentation)
+15. [Testing](#testing)
+16. [Benchmarks](#benchmarks)
+17. [Roadmap](#roadmap)
+18. [Contributing](#contributing)
 18. [License](#license)
 19. [Attribution](#attribution)
 20. [Acknowledgments](#acknowledgments)
@@ -886,10 +918,7 @@ practitioner communities. In particular:
 <table border="0" cellpadding="0" cellspacing="0">
 <tr>
 <td width="120" align="center" valign="middle">
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/brand/velonlabs-mark-light.svg">
-  <img src="docs/assets/brand/velonlabs-mark-dark.svg" alt="VelonLabs" width="96" height="96">
-</picture>
+<img src="docs/assets/brand/velonlabs-icon.png" alt="VelonLabs" width="96" height="96">
 </td>
 <td valign="middle">
 
