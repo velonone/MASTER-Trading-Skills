@@ -30,11 +30,16 @@
     "node": ">=18.0.0"
   },
   "files": [
+    "cli/",
     "skills/",
     "backtest/",
+    "docs/assets/brand/",
+    "AGENT_MANIFEST.json",
     "SKILL_LITE.md",
     "SKILL.md",
     "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
     "pyproject.toml",
     ".agentignore"
   ]
