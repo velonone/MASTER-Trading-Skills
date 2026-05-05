@@ -46,7 +46,7 @@ and what changed in the market that motivates the update.
 
 <!--
 What goes wrong if we ship this change? Who is most affected
-(snapshot users, self-calibration users, live subscribers)?
+(snapshot users, self-calibration users, custom JSON users)?
 -->
 
 ## Proposed snapshot version bump

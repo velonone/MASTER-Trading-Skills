@@ -24,7 +24,7 @@ These are non-negotiable — PRs that violate them will be closed.
    reference snapshot at
    [`skills/inference/_calibration_data.py`](skills/inference/_calibration_data.py).
    All other calibrations — VelonLabs internal data, your own
-   self-calibration, subscriber files — must stay outside the repo.
+   self-calibration JSON files — must stay outside the repo.
    `.gitignore` blocks the standard patterns (`*.calibration.json`,
    `calibration_*.json`, `trades_*.csv`, `~/.master-trading/`); do not
    bypass it.

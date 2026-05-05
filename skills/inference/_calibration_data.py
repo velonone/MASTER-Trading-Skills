@@ -2,18 +2,18 @@
 VelonLabs Reference Calibration · Snapshot v2026.05
 ====================================================
 Single source of truth for calibration constants used by the inference
-layer. Released into the public domain as a free reference baseline.
+layer. Released as a free MIT-licensed reference baseline.
 
-Origin: derived from VelonLabs proprietary calibration process against
+Origin: derived from VelonLabs internal calibration process against
 crypto market data 2020-01 to 2026-04.
 
 Markets evolve. These values reflect observed behavior up to the
 released_at date below; their predictive power decays over time.
+Updated snapshots ship as PRs to this file (community-maintained).
 
 Usage modes (see skills.inference.calibration.Calibration):
 
-  snapshot   — load this file directly (free, what you see here)
-  live       — hit VelonLabs API for current month's calibration (paid)
+  snapshot   — load this file directly (default, what you see here)
   self       — run tools/calibrate.py against your own trade history
   custom     — load any user-provided JSON with the same shape
 

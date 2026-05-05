@@ -8,20 +8,21 @@ Resolution order (first non-empty wins):
   1. Explicit kwarg passed to Calibration(...)
   2. Environment variable MASTER_TRADING_CALIBRATION
   3. Per-user config file ~/.master-trading/config.json
-  4. Bundled VelonLabs Reference Snapshot (free, real values)
+  4. Bundled VelonLabs Reference Snapshot (real values)
 
 The bundled snapshot is the actual VelonLabs calibration as of its
 release date — it is NOT a placeholder. Users who install the package
-get usable values immediately. Subscription tiers exist for fresher
-calibrations (markets evolve and snapshot ages).
+get usable values immediately. Updated snapshots ship as PRs to
+``_calibration_data.py`` (community-maintained); pin to a specific
+file via ``custom`` if you want full reproducibility.
 
 Sources
 -------
-snapshot     — bundled VelonLabs Reference Calibration (default, free)
-live         — VelonLabs subscription API (paid, monthly updates)
+snapshot     — bundled VelonLabs Reference Calibration (default)
 self         — locally calibrated from your own trading history
 custom       — user-provided JSON file path
-placeholder  — all confidences forced to 0.5 (DO NOT use for live trading)
+placeholder  — all confidences forced to 0.5 (architecture testing only;
+               DO NOT use for live trading)
 
 Programmatic usage
 ------------------
@@ -37,7 +38,6 @@ CLI usage
     python -m skills.inference.calibration show
     python -m skills.inference.calibration set snapshot
     python -m skills.inference.calibration set custom --path=./my.json
-    python -m skills.inference.calibration set live --api-key=xxx
     python -m skills.inference.calibration reset
 """
 
@@ -64,7 +64,6 @@ _logger = get_logger("inference.calibration")
 CONFIG_DIR = Path.home() / ".master-trading"
 CONFIG_PATH = CONFIG_DIR / "config.json"
 ENV_VAR = "MASTER_TRADING_CALIBRATION"
-ENV_VAR_API_KEY = "MASTER_TRADING_VELONLABS_KEY"
 ENV_VAR_CUSTOM_PATH = "MASTER_TRADING_CALIBRATION_PATH"
 
 FRESHNESS_WARN_DAYS = 90
@@ -72,7 +71,6 @@ FRESHNESS_WARN_DAYS = 90
 
 class CalibrationSource(str, Enum):
     SNAPSHOT = "snapshot"
-    LIVE = "live"
     SELF = "self"
     CUSTOM = "custom"
     PLACEHOLDER = "placeholder"
@@ -82,7 +80,7 @@ SETUP_PROMPT = """\
 The trading inference engine uses calibration values to produce confidence
 scores. Pick a source so your agent knows which numbers it's standing on.
 
-  ✓ snapshot    (recommended · free · default)
+  ✓ snapshot    (recommended · default)
                 VelonLabs Reference Calibration v{version} — the actual
                 calibration values used by VelonLabs trading operations,
                 derived from market data {start} to {end}. Real numbers,
@@ -90,19 +88,12 @@ scores. Pick a source so your agent knows which numbers it's standing on.
                 When to use: starting out, learning the framework, or any
                 strategy where stable calibration matters more than fresh.
 
-  ⊕ live        (paid subscription)
-                Monthly-updated calibration from VelonLabs. The same engine,
-                with confidences re-fit against the latest market regime
-                each month. Requires {api_env} to be set.
-                When to use: production strategies that need calibration
-                to track market evolution.
-
-  ⊙ self        (free, requires your own data)
+  ⊙ self        (your own data)
                 Run tools/calibrate.py against your own trade history
                 (6+ months recommended) to produce a custom calibration.
                 When to use: you have proprietary data and want full control.
 
-  ⊘ custom      (free, advanced)
+  ⊘ custom      (advanced)
                 Point at any JSON file matching the snapshot schema.
                 When to use: you have a third-party calibration source
                 or want to A/B different sets.
@@ -115,11 +106,13 @@ If you skip this, the snapshot is used by default and a one-time hint is
 emitted. You can change at any time:
 
     python -m skills.inference.calibration set <source>
+
+Calibration updates ship as PRs to ``skills/inference/_calibration_data.py``.
+Community contributions welcome.
 """.format(
     version=VELONLABS_SNAPSHOT_2026_05["version"],
     start=VELONLABS_SNAPSHOT_2026_05["calibrated_against"]["start"],
     end=VELONLABS_SNAPSHOT_2026_05["calibrated_against"]["end"],
-    api_env=ENV_VAR_API_KEY,
 )
 
 
@@ -182,8 +175,9 @@ class Calibration:
         if age > FRESHNESS_WARN_DAYS and self.source in {"snapshot", "custom"}:
             return (
                 f"Calibration is {age} days old (released {self.released_at}). "
-                f"Markets evolve — consider upgrading to a fresher source: "
-                f"see `python -m skills.inference.calibration set live`."
+                f"Markets evolve — consider running tools/calibrate.py against "
+                f"recent data, or pulling the latest reference snapshot from "
+                f"the repository."
             )
         return None
 
@@ -232,28 +226,6 @@ class Calibration:
             "loaded_from": str(p),
         }
         return cls(data=data, meta=meta)
-
-    @classmethod
-    def from_velonlabs_api(cls, api_key: Optional[str] = None) -> "Calibration":
-        """
-        Fetch the current month's VelonLabs calibration.
-
-        Currently raises NotImplementedError — the live endpoint is not
-        bundled with the open-source package. Subscribers receive an
-        endpoint URL + API key. The integration shape is intentionally
-        kept stable so swapping in a real client is a single-line change.
-        """
-        api_key = api_key or os.environ.get(ENV_VAR_API_KEY)
-        if not api_key:
-            raise ValueError(
-                f"Live calibration requires an API key. "
-                f"Set {ENV_VAR_API_KEY} or pass api_key=..."
-            )
-        raise NotImplementedError(
-            "VelonLabs live calibration endpoint is provided to subscribers. "
-            "Visit https://velonlabs.example/calibration for access. "
-            "Until then, the snapshot remains the recommended default."
-        )
 
     # ------------------------------------------------------------------
     # Resolution chain
@@ -324,9 +296,6 @@ class Calibration:
                     f"in {CONFIG_PATH}."
                 )
             return cls.from_file(path)
-        if name == CalibrationSource.LIVE.value:
-            api_key = config.get("velonlabs_api_key") or os.environ.get(ENV_VAR_API_KEY)
-            return cls.from_velonlabs_api(api_key)
         if name == CalibrationSource.SELF.value:
             path = config.get("calibration_path")
             if not path:
@@ -348,7 +317,6 @@ class Calibration:
         source: str,
         *,
         path: Optional[os.PathLike] = None,
-        api_key: Optional[str] = None,
     ) -> Path:
         """
         Persist the user's calibration choice to ``~/.master-trading/config.json``
@@ -362,13 +330,11 @@ class Calibration:
         }
         if path:
             cfg["calibration_path"] = str(Path(path).resolve())
-        if api_key:
-            cfg["velonlabs_api_key"] = api_key
 
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
         CONFIG_PATH.write_text(json.dumps(cfg, indent=2), encoding="utf-8")
         try:
-            os.chmod(CONFIG_PATH, 0o600)  # best-effort: avoid leaking api_key
+            os.chmod(CONFIG_PATH, 0o600)  # best-effort: lock down user config
         except OSError:
             pass
         _logger.info("calibration.persisted source=%s path=%s", source, CONFIG_PATH)
@@ -389,7 +355,6 @@ class Calibration:
             "env_var": os.environ.get(ENV_VAR),
             "config_path": str(CONFIG_PATH),
             "config_exists": CONFIG_PATH.exists(),
-            "velonlabs_api_key_set": bool(os.environ.get(ENV_VAR_API_KEY)),
         }
         if CONFIG_PATH.exists():
             try:
@@ -431,7 +396,6 @@ def _cli(argv: Optional[list] = None) -> int:
     p_set = sub.add_parser("set", help="Persist a calibration source choice.")
     p_set.add_argument("source", choices=[s.value for s in CalibrationSource])
     p_set.add_argument("--path", help="For 'custom' or 'self' sources.")
-    p_set.add_argument("--api-key", help="For 'live' source.")
 
     args = parser.parse_args(argv)
 
@@ -451,7 +415,7 @@ def _cli(argv: Optional[list] = None) -> int:
 
     if args.cmd == "set":
         path = Calibration.persist_choice(
-            args.source, path=args.path, api_key=args.api_key,
+            args.source, path=args.path,
         )
         print(f"saved {args.source} → {path}")
         return 0

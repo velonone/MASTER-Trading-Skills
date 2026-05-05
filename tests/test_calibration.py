@@ -19,7 +19,6 @@ import pytest
 from skills.inference.calibration import (
     CONFIG_PATH,
     ENV_VAR,
-    ENV_VAR_API_KEY,
     Calibration,
     CalibrationNotConfigured,
     CalibrationSource,
@@ -41,7 +40,6 @@ def isolated_config(tmp_path, monkeypatch):
     monkeypatch.setattr("skills.inference.calibration.CONFIG_DIR", cfg_dir)
     monkeypatch.setattr("skills.inference.calibration.CONFIG_PATH", cfg_path)
     monkeypatch.delenv(ENV_VAR, raising=False)
-    monkeypatch.delenv(ENV_VAR_API_KEY, raising=False)
     monkeypatch.delenv("MASTER_TRADING_CALIBRATION_PATH", raising=False)
     return cfg_path
 
@@ -195,24 +193,6 @@ def test_recent_snapshot_emits_no_warning():
     cal = Calibration.velonlabs_snapshot()
     # Default snapshot's released_at is recent w.r.t. today's date.
     assert cal.freshness_warning() is None
-
-
-# ---------------------------------------------------------------------------
-# Live source guard
-# ---------------------------------------------------------------------------
-
-
-def test_live_source_requires_api_key(isolated_config, monkeypatch):
-    monkeypatch.delenv(ENV_VAR_API_KEY, raising=False)
-    with pytest.raises(ValueError, match="API key"):
-        Calibration.from_velonlabs_api()
-
-
-def test_live_source_not_yet_implemented(isolated_config, monkeypatch):
-    """The OSS package ships without the live endpoint client baked in."""
-    monkeypatch.setenv(ENV_VAR_API_KEY, "fake")
-    with pytest.raises(NotImplementedError):
-        Calibration.from_velonlabs_api()
 
 
 # ---------------------------------------------------------------------------

@@ -46,5 +46,5 @@ assignees: []
 ---
 
 > **Reminder**: do **not** paste API keys, private keys, real trade
-> history, or VelonLabs subscriber calibration files into this issue.
+> history, or proprietary calibration files into this issue.
 > Redact anything that looks sensitive.

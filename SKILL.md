@@ -129,9 +129,8 @@ result = await adapter.dispatch("calibration_setup", {"action": "prompt"})
 
 ```python
 await adapter.dispatch("calibration_setup", {
-    "source": "snapshot"            # or "live"/"self"/"custom"/"placeholder"
+    "source": "snapshot"            # or "self"/"custom"/"placeholder"
     # "path": "/abs/path.json"      # for "custom" or "self"
-    # "api_key": "xxx"              # for "live"
 })
 # → writes ~/.master-trading/config.json (chmod 0600)
 ```

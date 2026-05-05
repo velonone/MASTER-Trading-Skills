@@ -11,8 +11,8 @@ Recommended agent flow (also documented in SKILL.md):
        and a hint is included.
     2. The agent SHOULD surface :data:`SETUP_PROMPT` to the user once,
        so the user can pick deliberately.
-    3. The user replies with one of: snapshot / live / self / custom /
-       placeholder (and a path or api_key when applicable).
+    3. The user replies with one of: snapshot / self / custom /
+       placeholder (and a path when applicable).
     4. The agent calls this skill with that selection, which persists
        the choice to ``~/.master-trading/config.json``.
     5. Subsequent calls resolve the new source automatically.
@@ -45,9 +45,8 @@ class CalibrationSetupSkill(BaseSkill):
 
         {
             "action": "set" | "show" | "reset" | "prompt",
-            "source": "snapshot" | "live" | "self" | "custom" | "placeholder",
-            "path": "/abs/path/to/calibration.json",   # for custom/self
-            "api_key": "..."                            # for live
+            "source": "snapshot" | "self" | "custom" | "placeholder",
+            "path": "/abs/path/to/calibration.json"   # for custom/self
         }
 
     The default action is ``set`` when ``source`` is provided; otherwise
@@ -56,10 +55,10 @@ class CalibrationSetupSkill(BaseSkill):
 
     name = "calibration_setup"
     description = (
-        "Configure the inference calibration source (snapshot / live / "
-        "self / custom / placeholder). Call this AFTER asking the user "
-        "which source they want. Use action='prompt' to retrieve the "
-        "exact text to show the user."
+        "Configure the inference calibration source (snapshot / self / "
+        "custom / placeholder). Call this AFTER asking the user which "
+        "source they want. Use action='prompt' to retrieve the exact "
+        "text to show the user."
     )
     version = "1.0.0"
     triggers = ["calibration", "setup", "configure"]
@@ -84,7 +83,7 @@ class CalibrationSetupSkill(BaseSkill):
                 return {
                     "status": "error",
                     "code": "MISSING_SOURCE",
-                    "message": "Provide source=<snapshot|live|self|custom|placeholder>",
+                    "message": "Provide source=<snapshot|self|custom|placeholder>",
                     "prompt": SETUP_PROMPT,
                 }
             valid = {s.value for s in CalibrationSource}
@@ -97,12 +96,9 @@ class CalibrationSetupSkill(BaseSkill):
                 }
 
             path: Optional[str] = context.get("path")
-            api_key: Optional[str] = context.get("api_key")
 
             try:
-                config_path = Calibration.persist_choice(
-                    source, path=path, api_key=api_key,
-                )
+                config_path = Calibration.persist_choice(source, path=path)
             except Exception as exc:  # noqa: BLE001
                 return {
                     "status": "error",

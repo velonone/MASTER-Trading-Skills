@@ -377,13 +377,17 @@ package and you immediately get usable numbers.
 
 ### Sources
 
-| Source | Cost | When to use |
-|---|---|---|
-| `snapshot` (default) | Free | Getting started, learning, stable strategies. Frozen at release date. |
-| `live` | Paid subscription | Production strategies needing monthly-updated calibration. |
-| `self` | Free + your data | You have 6+ months of trade history and want full control. |
-| `custom` | Free | A third-party calibration JSON that matches the schema. |
-| `placeholder` | Free | Architecture testing only — all confidences are 0.5. |
+| Source | When to use |
+|---|---|
+| `snapshot` (default) | Getting started, learning, stable strategies. Frozen at release date. |
+| `self` | You have 6+ months of trade history and want full control. |
+| `custom` | A third-party calibration JSON that matches the snapshot schema. |
+| `placeholder` | Architecture testing only — all confidences forced to 0.5. |
+
+Calibration updates ship as pull requests to
+[`skills/inference/_calibration_data.py`](skills/inference/_calibration_data.py).
+Community contributions welcome — see the
+[Calibration update template](.github/ISSUE_TEMPLATE/calibration_update.md).
 
 ### Configure
 
@@ -397,7 +401,7 @@ python -m skills.inference prompt
 # Persist a choice (writes ~/.master-trading/config.json with chmod 0600)
 python -m skills.inference set snapshot
 python -m skills.inference set custom --path=./my-calibration.json
-python -m skills.inference set live   --api-key=YOUR_VELONLABS_KEY
+python -m skills.inference set self   --path=./my-self-calibration.json
 ```
 
 You can also set the source via environment variable for non-interactive
@@ -405,9 +409,9 @@ contexts (CI, Docker, agent runtimes):
 
 ```bash
 export MASTER_TRADING_CALIBRATION=snapshot
-# or
-export MASTER_TRADING_CALIBRATION=live
-export MASTER_TRADING_VELONLABS_KEY=...
+# or pin a specific JSON file
+export MASTER_TRADING_CALIBRATION=custom
+export MASTER_TRADING_CALIBRATION_PATH=/abs/path/to/calibration.json
 ```
 
 ### Provenance in every output
