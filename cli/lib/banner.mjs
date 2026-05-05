@@ -1,26 +1,27 @@
 /**
- * Animated VelonLabs Banner — compact framed layout
- * ===================================================
- * The mark on the left is a stylised "V" letter (VelonLabs's V) drawn
- * with diagonal block strokes — clean enough to read as a glyph in any
- * terminal, sharp enough to feel like a brand mark. It pulses through
- * the brand violet ramp with a sine-wave phase shift so the colour
- * appears to rotate; the right-side text and the box border stay still.
+ * Animated VelonLabs Banner — Opencode-style wordmark
+ * =====================================================
+ * No ASCII figure. The brand surface is the wordmark itself, set in
+ * 5-row block letters with a vertical violet emboss (lighter top edge,
+ * darker bottom edge) and a subtle horizontal sheen that sweeps once
+ * on startup before settling. The whole composition is held inside a
+ * rounded-corner violet box so the banner reads as a single unit.
  *
- * Layout (76 cols wide, 8 rows tall including borders):
+ *     ╭───────────────────────────────────────────────────────────────────╮
+ *     │                                                                   │
+ *     │    █   █  ████  ████  █████  █████  ████                          │  ← brighter (top)
+ *     │    ██ ██ ██  ██ ██      █    ██     ██  █                         │
+ *     │    █ █ █ █████   ███    █    ████   ████                          │
+ *     │    █   █ ██  ██    ██   █    ██     ██  █                         │
+ *     │    █   █ ██  ██ ████    █    █████  ██  ██                        │  ← darker (bottom)
+ *     │                                                                   │
+ *     │    TRADING · SKILLS    ·    by VelonLabs                          │
+ *     │    v3.1.0  ·  139 tests  ·  MIT  ·  calibration v2026.05          │
+ *     │                                                                   │
+ *     ╰───────────────────────────────────────────────────────────────────╯
  *
- *   ╭────────────────────────────────────────────────────────────────────────╮
- *   │                                                                        │
- *   │   █▙       ▟█      VelonLabs                                           │
- *   │    █▙     ▟█       master-trading-skills · v3.1.0                      │
- *   │     █▙   ▟█        trading skills for autonomous coding agents         │
- *   │      ▜█▙▟█▛        139 tests · MIT · calibration v2026.05              │
- *   │                                                                        │
- *   ╰────────────────────────────────────────────────────────────────────────╯
- *
- * The V is 4 rows × 11 cols. Right-side text is 4 rows packed tight.
- * Animation runs only on truecolor TTYs; non-TTY / no-color terminals
- * get a single static render.
+ * Animation runs only on truecolor TTYs; other terminals get a single
+ * static render with the same emboss but no motion.
  */
 
 import {
@@ -38,30 +39,49 @@ import {
   supportsTrueColorOutput,
 } from "./colors.mjs";
 
-// ─────────────────────────── ASCII logo ───────────────────────────
-//
-// Diagonal V drawn with block elements. Each row is 11 cols wide.
-// The strokes are 2 cols thick so the V reads at a glance.
-const LOGO_ROWS = [
-  "█▙       ▟█",
-  " █▙     ▟█ ",
-  "  █▙   ▟█  ",
-  "   ▜█▙▟█▛  ",
-];
+// ─────────────────────────── 5-row block font ───────────────────────────
 
-const LOGO_WIDTH = LOGO_ROWS[0].length;
-const LOGO_HEIGHT = LOGO_ROWS.length;
+const FONT = {
+  M: ["█   █", "██ ██", "█ █ █", "█   █", "█   █"],
+  A: [" ███ ", "█   █", "█████", "█   █", "█   █"],
+  S: ["█████", "█    ", "█████", "    █", "█████"],
+  T: ["█████", "  █  ", "  █  ", "  █  ", "  █  "],
+  E: ["█████", "█    ", "████ ", "█    ", "█████"],
+  R: ["████ ", "█   █", "████ ", "█  █ ", "█   █"],
+  " ": ["     ", "     ", "     ", "     ", "     "],
+};
 
-const BOX_WIDTH = 76;                 // total width including border columns
+const WORDMARK_TEXT = "MASTER";
+const WORDMARK_GAP = 2; // cols of space between glyphs
+
+function buildWordmark(text) {
+  const rows = ["", "", "", "", ""];
+  const sep = " ".repeat(WORDMARK_GAP);
+  const chars = text.split("");
+  chars.forEach((ch, idx) => {
+    const glyph = FONT[ch.toUpperCase()] || FONT[" "];
+    for (let r = 0; r < 5; r++) {
+      rows[r] += glyph[r];
+      if (idx < chars.length - 1) rows[r] += sep;
+    }
+  });
+  return rows;
+}
+
+const WORDMARK_ROWS = buildWordmark(WORDMARK_TEXT);
+const WORDMARK_WIDTH = WORDMARK_ROWS[0].length;
+const WORDMARK_HEIGHT = WORDMARK_ROWS.length;
+
+// ─────────────────────────── box dimensions ───────────────────────────
+
+const BOX_WIDTH = 76;                 // total width including borders
 const INNER_WIDTH = BOX_WIDTH - 4;    // minus "│ " ... " │"
-const LEFT_PAD = 3;                   // space between border and logo
-const LOGO_GAP = 6;                   // space between logo and right-side text
 
 // ─────────────────────────── color math ───────────────────────────
 
 const lerp = (a, b, t) => a + (b - a) * t;
 
-/** Sample violet ramp at t∈[0,1] (0=deep, 1=soft). */
+/** Sample violet ramp at t ∈ [0, 1]. 0 = deep, 1 = soft (light). */
 function sampleViolet(t) {
   const a = PALETTE.violetDeep;
   const b = PALETTE.violetSoft;
@@ -72,11 +92,17 @@ function sampleViolet(t) {
   ];
 }
 
-/** Apply rotating-gradient phase to the V cells. */
-function colorizeLogo(rows, frame) {
+/**
+ * Render the wordmark with an embossed vertical gradient (lighter at
+ * top, darker at bottom) plus an optional horizontal sheen offset by
+ * `frame` so a soft highlight slides across the letters.
+ */
+function colorizeWordmark(rows, frame) {
   if (!colorEnabled) return rows.slice();
-  const period = 24;
+  const totalRows = rows.length;
   return rows.map((row, rowIdx) => {
+    // Vertical emboss: 1.0 at top → 0.0 at bottom
+    const baseT = 1 - rowIdx / (totalRows - 1);
     let out = "";
     for (let col = 0; col < row.length; col++) {
       const ch = row[col];
@@ -84,16 +110,16 @@ function colorizeLogo(rows, frame) {
         out += ch;
         continue;
       }
-      // Phase shifts diagonally: col + 2*row + 3*frame.
-      const phase = (col + rowIdx * 2 + frame * 3) % period;
-      const t = (1 + Math.sin((phase / period) * Math.PI * 2)) / 2;
+      // Horizontal sheen — gentle sine wave sliding with frame.
+      const sheen = Math.sin((col / row.length) * Math.PI * 2 + frame * 0.18) * 0.18;
+      const t = Math.max(0, Math.min(1, baseT + sheen));
       out += rgb(sampleViolet(t)) + ch;
     }
     return out + RESET;
   });
 }
 
-// ─────────────────────────── escape-aware width ───────────────────────────
+// ─────────────────────────── escape-aware width helpers ───────────────────────────
 
 function visibleLength(str) {
   // eslint-disable-next-line no-control-regex
@@ -105,6 +131,14 @@ function padRight(str, targetVisible) {
   return v >= targetVisible ? str : str + " ".repeat(targetVisible - v);
 }
 
+function padCenter(str, targetVisible) {
+  const v = visibleLength(str);
+  if (v >= targetVisible) return str;
+  const total = targetVisible - v;
+  const left = Math.floor(total / 2);
+  return " ".repeat(left) + str + " ".repeat(total - left);
+}
+
 // ─────────────────────────── box border ───────────────────────────
 
 const TOP_BORDER    = "╭" + "─".repeat(BOX_WIDTH - 2) + "╮";
@@ -112,46 +146,44 @@ const BOTTOM_BORDER = "╰" + "─".repeat(BOX_WIDTH - 2) + "╯";
 
 const borderColor = (s) => rgb(PALETTE.violetDeep) + s + RESET;
 
-function row(content) {
-  return borderColor("│") + " " + content + " " + borderColor("│");
-}
-
+const row = (content) => borderColor("│") + " " + content + " " + borderColor("│");
 const emptyRow = () => row(" ".repeat(INNER_WIDTH));
-
-// ─────────────────────────── right-side text ───────────────────────────
-
-function rightTextRows({ version, calibrationVersion, testCount = 139 }) {
-  const sep = graphite(" · ");
-  return [
-    bold(violet("VelonLabs")),
-    bold(violetSoft("master-trading-skills")) + dim(" · v" + version),
-    graphite("trading skills for autonomous coding agents"),
-    [
-      `${testCount} tests`,
-      `MIT`,
-      `calibration v${calibrationVersion}`,
-    ].map(violetSoft).join(sep),
-  ];
-}
 
 // ─────────────────────────── frame composition ───────────────────────────
 
-function composeFrameLines({ logoColored, rightText }) {
+function subtitleRows({ version, calibrationVersion, testCount = 139 }) {
+  const dotSep = graphite("  ·  ");
+  return [
+    [
+      bold(violetSoft("TRADING · SKILLS")),
+      graphite("by"),
+      bold(violet("VelonLabs")),
+    ].join("    "),
+    [
+      `v${version}`,
+      `${testCount} tests`,
+      `MIT`,
+      `calibration v${calibrationVersion}`,
+    ].map((s) => violetSoft(s)).join(dotSep),
+  ];
+}
+
+function composeFrameLines({ wordmarkColored, subtitle }) {
   const lines = [];
   lines.push(borderColor(TOP_BORDER));
   lines.push(emptyRow());
 
-  // Content rows — height = max(logo, right text). For our spec both are 4.
-  const contentHeight = Math.max(logoColored.length, rightText.length);
-  for (let i = 0; i < contentHeight; i++) {
-    const logo = i < logoColored.length ? logoColored[i] : " ".repeat(LOGO_WIDTH);
-    const text = i < rightText.length ? rightText[i] : "";
-    let inner =
-      " ".repeat(LEFT_PAD) +
-      padRight(logo, LOGO_WIDTH) +
-      " ".repeat(LOGO_GAP) +
-      text;
-    inner = padRight(inner, INNER_WIDTH);
+  // Wordmark — centred horizontally inside the box
+  for (const r of wordmarkColored) {
+    const inner = padRight(padCenter(r, INNER_WIDTH), INNER_WIDTH);
+    lines.push(row(inner));
+  }
+
+  lines.push(emptyRow());
+
+  // Subtitle block — also centred
+  for (const s of subtitle) {
+    const inner = padRight(padCenter(s, INNER_WIDTH), INNER_WIDTH);
     lines.push(row(inner));
   }
 
@@ -176,14 +208,14 @@ export async function animateBanner({
   version = "?",
   calibrationVersion = "?",
   testCount = 139,
-  durationMs = 1600,
-  fps = 18,
+  durationMs = 1500,
+  fps = 16,
 } = {}) {
-  const rightText = rightTextRows({ version, calibrationVersion, testCount });
+  const subtitle = subtitleRows({ version, calibrationVersion, testCount });
 
   if (!colorEnabled || !supportsTrueColorOutput || !process.stdout.isTTY) {
-    const colored = colorizeLogo(LOGO_ROWS, 0);
-    const lines = composeFrameLines({ logoColored: colored, rightText });
+    const colored = colorizeWordmark(WORDMARK_ROWS, 0);
+    const lines = composeFrameLines({ wordmarkColored: colored, subtitle });
     process.stdout.write(lines.join("\n") + "\n");
     return;
   }
@@ -195,8 +227,8 @@ export async function animateBanner({
 
   // First paint
   let lines = composeFrameLines({
-    logoColored: colorizeLogo(LOGO_ROWS, 0),
-    rightText,
+    wordmarkColored: colorizeWordmark(WORDMARK_ROWS, 0),
+    subtitle,
   });
   process.stdout.write(lines.join("\n") + "\n");
   const totalRows = lines.length;
@@ -205,17 +237,17 @@ export async function animateBanner({
     await sleep(interval);
     process.stdout.write(moveUp(totalRows) + moveCol1);
     lines = composeFrameLines({
-      logoColored: colorizeLogo(LOGO_ROWS, f),
-      rightText,
+      wordmarkColored: colorizeWordmark(WORDMARK_ROWS, f),
+      subtitle,
     });
     process.stdout.write(lines.map((l) => ERASE_LINE + l).join("\n") + "\n");
   }
 
-  // Settle on canonical frame.
+  // Settle on canonical frame
   process.stdout.write(moveUp(totalRows) + moveCol1);
   lines = composeFrameLines({
-    logoColored: colorizeLogo(LOGO_ROWS, 0),
-    rightText,
+    wordmarkColored: colorizeWordmark(WORDMARK_ROWS, 0),
+    subtitle,
   });
   process.stdout.write(lines.map((l) => ERASE_LINE + l).join("\n") + "\n");
 
@@ -223,13 +255,13 @@ export async function animateBanner({
 }
 
 export function renderBanner(opts = {}) {
-  const rightText = rightTextRows({
+  const subtitle = subtitleRows({
     version: opts.version || "?",
     calibrationVersion: opts.calibrationVersion || "?",
     testCount: opts.testCount || 139,
   });
-  const colored = colorizeLogo(LOGO_ROWS, 0);
-  const lines = composeFrameLines({ logoColored: colored, rightText });
+  const colored = colorizeWordmark(WORDMARK_ROWS, 0);
+  const lines = composeFrameLines({ wordmarkColored: colored, subtitle });
   return lines.join("\n");
 }
 
